@@ -17,10 +17,13 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+from pathlib import Path
 
+# are we running circle CI?
+CIRCLECI = 'CIRCLECI' in os.environ
 
 # -- General configuration ------------------------------------------------
 
@@ -43,6 +46,7 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
     'sphinx_copybutton',
+    'sphinx_gallery.gen_gallery',
 ]
 
 # Configuration options for plot_directive. See:
@@ -50,9 +54,52 @@ extensions = [
 plot_html_show_source_link = False
 plot_html_show_formats = False
 
+
 # Generate the API documentation when building
 autosummary_generate = True
 numpydoc_show_class_members = False
+
+is_release_build = False
+
+# Sphinx gallery configuration
+
+def matplotlib_reduced_latex_scraper(block, block_vars, gallery_conf,
+                                     **kwargs):
+    """
+    Reduce srcset when creating a PDF.
+
+    Because sphinx-gallery runs *very* early, we cannot modify this even in the
+    earliest builder-inited signal. Thus we do it at scraping time.
+    """
+    from sphinx_gallery.scrapers import matplotlib_scraper
+
+    if gallery_conf['builder_name'] == 'latex':
+        gallery_conf['image_srcset'] = []
+    return matplotlib_scraper(block, block_vars, gallery_conf, **kwargs)
+
+
+sphinx_gallery_conf = {
+    'examples_dirs': ['../../examples', ],
+    'filename_pattern': '^((?!sgskip).)*$',
+    'gallery_dirs': ['gallery'],
+    'doc_module': ('data_prototype',),
+    'reference_url': {
+        'matplotlib': None,
+    },
+    'backreferences_dir': Path('api') / Path('_as_gen'),
+    'remove_config_comments': True,
+    'min_reported_time': 1,
+    'thumbnail_size': (320, 224),
+    'image_scrapers': (matplotlib_reduced_latex_scraper, ),
+    # Compression is a significant effort that we skip for local and CI builds.
+    'compress_images': ('thumbnails', 'images') if is_release_build else (),
+    'matplotlib_animations': True,
+    'image_srcset': ["2x"],
+    'junit': '../test-results/sphinx-gallery/junit.xml' if CIRCLECI else '',
+}
+
+mathmpl_fontsize = 11.0
+mathmpl_srcset = ['2x']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -105,9 +152,8 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-import sphinx_rtd_theme
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "mpl_sphinx_theme"
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

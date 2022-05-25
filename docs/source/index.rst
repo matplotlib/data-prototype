@@ -11,5 +11,6 @@ data_prototype Documentation
 
    installation
    usage
+   gallery/index.rst
    release-history
    min_versions
