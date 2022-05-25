@@ -1,4 +1,5 @@
 from matplotlib.lines import Line2D as _Line2D
+from matplotlib.image import AxesImage as _AxesImage
 
 
 class ProxyWrapper:
@@ -49,4 +50,19 @@ class LineWrapper(ProxyWrapper):
     def draw(self, renderer):
         data = self._query_and_transform(renderer)
         self._wrapped_instance.set_data(data["x"], data["y"])
+        return self._wrapped_instance.draw(renderer)
+
+
+class ImageWrapper(ProxyWrapper):
+    _wrapped_class = _AxesImage
+
+    def __init__(self, data, nus=None, /, **kwargs):
+        super().__init__(data, nus)
+        kwargs.setdefault("origin", "lower")
+        self._wrapped_instance = self._wrapped_class(None, **kwargs)
+
+    def draw(self, renderer):
+        data = self._query_and_transform(renderer)
+        self._wrapped_instance.set_array(data["image"])
+        self._wrapped_instance.set_extent(data["extent"])
         return self._wrapped_instance.draw(renderer)
