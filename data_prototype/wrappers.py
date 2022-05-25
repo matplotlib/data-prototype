@@ -5,6 +5,7 @@ class ProxyWrapper:
     _privtized_methods = ()
     _wrapped_class = None
     _wrapped_instance = None
+    data = None
 
     def draw(self, renderer):
         raise NotImplementedError
@@ -22,18 +23,30 @@ class ProxyWrapper:
         else:
             super().__setattr__(key, value)
 
+    def _query_and_transform(self, renderer):
+        ax = self._wrapped_instance.axes
+        ax_bbox = ax.get_window_extent(renderer)
+        return {
+            # doing this here is nice because we can write it once, but we really want to
+            # push this computation down a layer
+            k: self.nus.get(k, lambda x: x)(v)
+            for k, v in self.data.query([*ax.get_xlim(), *ax.get_ylim()], ax_bbox.size).items()
+        }
+
+    def __init__(self, data, nus):
+        self.data = data
+        self.nus = nus or {}
+
 
 class LineWrapper(ProxyWrapper):
     _wrapped_class = _Line2D
     _privtized_methods = set(["set_xdata", "set_ydata", "set_data"])
 
-    def __init__(self, data, /, **kwargs):
+    def __init__(self, data, nus=None, /, **kwargs):
+        super().__init__(data, nus)
         self._wrapped_instance = self._wrapped_class([], [], **kwargs)
-        self.data = data
 
     def draw(self, renderer):
-        ax = self._wrapped_instance.axes
-        ax_bbox = ax.get_window_extent(renderer)
-        data = self.data.query([*ax.get_xlim(), *ax.get_ylim()], ax_bbox.size)
+        data = self._query_and_transform(renderer)
         self._wrapped_instance.set_data(data["x"], data["y"])
         return self._wrapped_instance.draw(renderer)
