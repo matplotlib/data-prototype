@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Protocol, Tuple
 
 import numpy as np
 
@@ -7,12 +7,41 @@ from cachetools import LFUCache
 from matplotlib.lines import Line2D as _Line2D
 from matplotlib.image import AxesImage as _AxesImage
 
+from data_prototype.containers import DataContainer
+
+
+class _BBox(Protocol):
+    size: Tuple[float, float]
+
+
+class _Axis(Protocol):
+    def convert_units(self, Any) -> Any:
+        ...
+
+
+class _Axes(Protocol):
+    xaxis: _Axis
+    yaxis: _Axis
+
+    def get_xlim(self) -> Tuple[float, float]:
+        ...
+
+    def get_ylim(self) -> Tuple[float, float]:
+        ...
+
+    def get_window_extent(self, renderer) -> _BBox:
+        ...
+
+
+class _Aritst(Protocol):
+    axes: _Axes
+
 
 class ProxyWrapper:
-    _privtized_methods = ()
+    _privtized_methods: Tuple[str, ...] = ()
     _wrapped_class = None
-    _wrapped_instance = None
-    data = None
+    _wrapped_instance: _Aritst
+    data: DataContainer
 
     def draw(self, renderer):
         raise NotImplementedError
@@ -47,10 +76,12 @@ class ProxyWrapper:
 
         # actually query the underlying data.  This returns both the (raw) data
         # and key to use for caching.
+        bb_size = ax_bbox.size
         data, cache_key = self.data.query(
             # TODO do this need to be (de) unitized
             (*ax.get_xlim(), *ax.get_ylim()),
-            tuple(np.round(ax_bbox.size).astype(int)),
+            # TODO find better way to placate mypy
+            (int(round(bb_size[0])), int(round(bb_size[1]))),
             # TODO sort out how to spell the x/y scale
             # TODO is scale enoguh?  What do we have to do about non-trivial projection?
             xscale=None,
@@ -83,9 +114,9 @@ class ProxyWrapper:
 
 class LineWrapper(ProxyWrapper):
     _wrapped_class = _Line2D
-    _privtized_methods = set(["set_xdata", "set_ydata", "set_data"])
+    _privtized_methods = ("set_xdata", "set_ydata", "set_data")
 
-    def __init__(self, data, nus=None, /, **kwargs):
+    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
         self._wrapped_instance = self._wrapped_class([], [], **kwargs)
 
@@ -98,7 +129,7 @@ class LineWrapper(ProxyWrapper):
 class ImageWrapper(ProxyWrapper):
     _wrapped_class = _AxesImage
 
-    def __init__(self, data, nus=None, /, **kwargs):
+    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
         kwargs.setdefault("origin", "lower")
         self._wrapped_instance = self._wrapped_class(None, **kwargs)

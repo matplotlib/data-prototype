@@ -2,7 +2,7 @@ from pathlib import Path
 from . import _version
 
 
-def _get_version():
+def _get_version() -> str:
     """Return the version string used for __version__."""
     # Only shell out to a git subprocess if really needed, and not on a
     # shallow clone, such as those used by CI, as the latter would trigger
@@ -11,7 +11,7 @@ def _get_version():
     root = Path(__file__).resolve().parents[2]
     if (root / ".git").exists() and not (root / ".git/shallow").exists():
         try:
-            import setuptools_scm
+            import setuptools_scm  # type: ignore
 
             return setuptools_scm.get_version(
                 root=root,
