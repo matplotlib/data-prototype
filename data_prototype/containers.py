@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Protocol, List, Dict, Tuple, Optional, Any, Union, Callable
+from typing import Protocol, List, Dict, Tuple, Optional, Any, Union, Callable, MutableMapping
 import uuid
 
 import numpy as np
@@ -30,7 +30,7 @@ class DataContainer(Protocol):
         size: Tuple[int, int],
         xscale: Optional[str] = None,
         yscale: Optional[str] = None,
-    ) -> Tuple[Dict[str, Any], str]:
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
         """
         Query the data container for data.
 
@@ -88,7 +88,7 @@ class ArrayContainer:
         size: Tuple[int, int],
         xscale: Optional[str] = None,
         yscale: Optional[str] = None,
-    ) -> Tuple[Dict[str, Any], str]:
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return dict(self._data), self._cache_key
 
     def describe(self):
@@ -105,7 +105,7 @@ class RandomContainer:
         size: Tuple[int, int],
         xscale: Optional[str] = None,
         yscale: Optional[str] = None,
-    ) -> Tuple[Dict[str, Any], str]:
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {k: np.random.randn(d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
 
     def describe(self):
@@ -140,7 +140,7 @@ class FuncContainer:
 
         """
         # TODO validate no collisions
-        self._desc = {}
+        self._desc: Dict[str, Desc] = {}
 
         def _split(input_dict):
             out = {}
@@ -152,7 +152,7 @@ class FuncContainer:
         self._xfuncs = _split(xfuncs) if xfuncs is not None else {}
         self._yfuncs = _split(yfuncs) if yfuncs is not None else {}
         self._xyfuncs = _split(xyfuncs) if xyfuncs is not None else {}
-        self._cache = LFUCache(64)
+        self._cache: MutableMapping[Union[str, int], Any] = LFUCache(64)
 
     # cache could go here!
     def query(
@@ -161,7 +161,7 @@ class FuncContainer:
         size: Tuple[int, int],
         xscale: Optional[str] = None,
         yscale: Optional[str] = None,
-    ) -> Tuple[Dict[str, Any], str]:
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
         hash_key = hash((data_bounds, size, xscale, yscale))
         if hash_key in self._cache:
             return self._cache[hash_key], hash_key
@@ -187,7 +187,7 @@ class WebServiceContainer:
         size: Tuple[int, int],
         xscale: Optional[str] = None,
         yscale: Optional[str] = None,
-    ) -> Tuple[Dict[str, Any], str]:
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def hit_some_database():
             {}, "1"
 
