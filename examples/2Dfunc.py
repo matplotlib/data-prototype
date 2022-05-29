@@ -17,8 +17,9 @@ from matplotlib.colors import Normalize
 fc = FuncContainer(
     {},
     xyfuncs={
-        "extent": lambda x, y: [x[0], x[-1], y[0], y[-1]],
-        "image": lambda x, y: np.sin(x).reshape(1, -1) * np.cos(y).reshape(-1, 1),
+        "xextent": ([2], lambda x, y: [x[0], x[-1]]),
+        "yextent": ([2], lambda x, y: [y[0], y[-1]]),
+        "image": (['N', 'M'], lambda x, y: np.sin(x).reshape(1, -1) * np.cos(y).reshape(-1, 1)),
     },
 )
 im = ImageWrapper(fc, norm=Normalize(-1, 1))
