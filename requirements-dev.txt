@@ -16,3 +16,5 @@ numpydoc
 sphinx-copybutton
 mpl-sphinx-theme
 sphinx-gallery
+# typing
+types-cachetools
