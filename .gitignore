@@ -100,3 +100,7 @@ examples/tests/*
 !examples/tests/backend_driver_sgskip.py
 result_images
 doc/_static/constrained_layout*.png
+
+# setuptools_scm collateral
+
+data_prototype/_version.py
