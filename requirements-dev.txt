@@ -14,4 +14,5 @@ ipython
 matplotlib
 numpydoc
 sphinx-copybutton
-sphinx_rtd_theme
+mpl-sphinx-theme
+sphinx-gallery
