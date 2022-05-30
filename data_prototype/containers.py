@@ -177,6 +177,49 @@ class FuncContainer:
 
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
+
+
+class HistContainer:
+    def __init__(self, raw_data, num_bins: int):
+        self._raw_data = raw_data
+        self._num_bins = num_bins
+        self._desc = {
+            "edges": Desc([num_bins + 1 + 2], np.dtype(float)),
+            "density": Desc([num_bins + 2], np.dtype(float)),
+        }
+        self._full_range = (raw_data.min(), raw_data.max())
+        self._cache: MutableMapping[Union[str, int], Any] = LFUCache(64)
+
+    def query(
+        self,
+        data_bounds: Tuple[float, float, float, float],
+        size: Tuple[int, int],
+        xscale: Optional[str] = None,
+        yscale: Optional[str] = None,
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
+        dmin, dmax = self._full_range
+        xmin, xmax, *ybounds = data_bounds
+        xmin, xmax = np.clip([xmin, xmax], dmin, dmax)
+        hash_key = hash((xmin, xmax))
+        if hash_key in self._cache:
+            return self._cache[hash_key], hash_key
+        # TODO this gives an artifict with high lw
+        edges_in = []
+        if dmin < xmin:
+            edges_in.append(np.array([dmin]))
+        edges_in.append(np.linspace(xmin, xmax, self._num_bins))
+        if xmax < dmax:
+            edges_in.append(np.array([dmax]))
+
+        density, edges = np.histogram(
+            self._raw_data,
+            bins=np.concatenate(edges_in),
+            density=True,
+        )
+        ret = self._cache[hash_key] = {"edges": edges, "density": density}
+        return ret, hash_key
+
+    def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
 
 

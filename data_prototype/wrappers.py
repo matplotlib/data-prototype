@@ -6,6 +6,7 @@ from cachetools import LFUCache
 
 from matplotlib.lines import Line2D as _Line2D
 from matplotlib.image import AxesImage as _AxesImage
+from matplotlib.patches import StepPatch as _StepPatch
 
 from data_prototype.containers import DataContainer
 
@@ -116,7 +117,7 @@ class ProxyWrapper:
 
 class LineWrapper(ProxyWrapper):
     _wrapped_class = _Line2D
-    _privtized_methods = ("set_xdata", "set_ydata", "set_data")
+    _privtized_methods = ("set_xdata", "set_ydata", "set_data", "get_xdata", "get_ydata", "get_data")
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
@@ -140,4 +141,18 @@ class ImageWrapper(ProxyWrapper):
         data = self._query_and_transform(renderer, xunits=["xextent"], yunits=["yextent"])
         self._wrapped_instance.set_array(data["image"])
         self._wrapped_instance.set_extent([*data["xextent"], *data["yextent"]])
+        return self._wrapped_instance.draw(renderer)
+
+
+class StepWrapper(ProxyWrapper):
+    _wrapped_class = _StepPatch
+    _privtized_methods = ()  # ("set_data", "get_data")
+
+    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
+        super().__init__(data, nus)
+        self._wrapped_instance = self._wrapped_class([], [1], **kwargs)
+
+    def draw(self, renderer):
+        data = self._query_and_transform(renderer, xunits=["edges"], yunits=["density"])
+        self._wrapped_instance.set_data(data["density"], data["edges"])
         return self._wrapped_instance.draw(renderer)
