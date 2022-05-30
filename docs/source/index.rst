@@ -6,11 +6,27 @@
 data_prototype Documentation
 ============================
 
+This is prototype development for the next generation of data structures for
+Matplotlib.  This is the version "to throw away".  Everything in this
+repository should be considered experimental and used at you own risk.
+
+Examples
+--------
+
 .. toctree::
    :maxdepth: 2
 
-   installation
-   usage
    gallery/index.rst
+
+
+Backmatter
+----------
+
+
+.. toctree::
+   :maxdepth: 1
+
+
+   installation
    release-history
    min_versions
