@@ -3,6 +3,7 @@ from typing import Protocol, List, Dict, Tuple, Optional, Any, Union, Callable, 
 import uuid
 
 import numpy as np
+import pandas as pd
 
 from cachetools import LFUCache
 
@@ -218,6 +219,31 @@ class HistContainer:
         )
         ret = self._cache[hash_key] = {"edges": edges, "density": density}
         return ret, hash_key
+
+    def describe(self) -> Dict[str, Desc]:
+        return dict(self._desc)
+
+
+class SeriesContainer:
+    def __init__(self, series: pd.Series, index_name: str, col_name: str):
+        # TODO make a copy?
+        self._data = series
+        self._index_name = index_name
+        self._col_name = col_name
+        self._desc = {
+            index_name: Desc([len(series)], series.index.dtype),
+            col_name: Desc([len(series)], series.dtype),
+        }
+        self._hash_key = str(uuid.uuid4())
+
+    def query(
+        self,
+        data_bounds: Tuple[float, float, float, float],
+        size: Tuple[int, int],
+        xscale: Optional[str] = None,
+        yscale: Optional[str] = None,
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
+        return {self._index_name: self._data.index.values, self._col_name: self._data.values}, self._hash_key
 
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
