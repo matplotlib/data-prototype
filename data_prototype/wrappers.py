@@ -54,7 +54,9 @@ class ProxyWrapper:
         return getattr(self._wrapped_instance, key)
 
     def __setattr__(self, key, value):
-        if hasattr(self._wrapped_instance, key):
+        if key in ("_wrapped_instance", "data", "_cache", "nus"):
+            super().__setattr__(key, value)
+        elif hasattr(self, "_wrapped_instance") and hasattr(self._wrapped_instance, key):
             setattr(self._wrapped_instance, key, value)
         else:
             super().__setattr__(key, value)
