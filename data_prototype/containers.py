@@ -91,7 +91,7 @@ class ArrayContainer:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return dict(self._data), self._cache_key
 
-    def describe(self):
+    def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
 
 
@@ -108,7 +108,7 @@ class RandomContainer:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {k: np.random.randn(d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
 
-    def describe(self):
+    def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
 
 
@@ -154,7 +154,6 @@ class FuncContainer:
         self._xyfuncs = _split(xyfuncs) if xyfuncs is not None else {}
         self._cache: MutableMapping[Union[str, int], Any] = LFUCache(64)
 
-    # cache could go here!
     def query(
         self,
         data_bounds: Tuple[float, float, float, float],
@@ -176,7 +175,8 @@ class FuncContainer:
         )
         return ret, hash_key
 
-    def describe(self):
+    def describe(self) -> Dict[str, Desc]:
+        return dict(self._desc)
         return dict(self._desc)
 
 
