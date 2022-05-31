@@ -297,7 +297,7 @@ class DataFrameContainer:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         ret = {}
         if self._index_name is not None:
-            ret[self._index_name] = self._data.index.value
+            ret[self._index_name] = self._data.index.values
         for col, out in self._col_name_dict.items():
             ret[out] = self._data[col].values
 
