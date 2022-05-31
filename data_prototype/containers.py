@@ -81,7 +81,7 @@ class ArrayContainer:
     def __init__(self, **data):
         self._data = data
         self._cache_key = str(uuid.uuid4())
-        self._desc = {k: Desc(v.shape, v.dype) for k, v in data}
+        self._desc = {k: Desc(v.shape, v.dtype) for k, v in data.items()}
 
     def query(
         self,
