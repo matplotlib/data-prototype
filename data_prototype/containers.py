@@ -95,6 +95,13 @@ class ArrayContainer:
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
 
+    def update(self, **data):
+        # TODO check that this is still consistent with desc!
+        if not all(k in self._data for k in data):
+            raise Exception("Can not add keys")
+        self._data.update(data)
+        self._cache_key = str(uuid.uuid4())
+
 
 class RandomContainer:
     def __init__(self, **shapes):
