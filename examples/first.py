@@ -17,7 +17,7 @@ fc = FuncContainer({"x": (["N"], lambda x: x), "y": (["N"], np.sin)})
 lw = LineWrapper(fc, lw=5, color="green", label="sin (function)")
 
 th = np.linspace(0, 2 * np.pi, 16)
-sc = SeriesContainer(pd.Series(index=th, data=np.cos(th)), "x", "y")
+sc = SeriesContainer(pd.Series(index=th, data=np.cos(th)), index_name="x", col_name="y")
 lw2 = LineWrapper(sc, lw=3, color="blue", label="cos (pandas)")
 
 fig, ax = plt.subplots()

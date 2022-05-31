@@ -172,7 +172,7 @@ class FuncContainer:
         ret = self._cache[hash_key] = dict(
             **{k: f(x_data) for k, f in self._xfuncs.items()},
             **{k: f(y_data) for k, f in self._yfuncs.items()},
-            **{k: f(x_data, y_data) for k, f in self._xyfuncs.items()}
+            **{k: f(x_data, y_data) for k, f in self._xyfuncs.items()},
         )
         return ret, hash_key
 
@@ -225,7 +225,11 @@ class HistContainer:
 
 
 class SeriesContainer:
-    def __init__(self, series: pd.Series, index_name: str, col_name: str):
+    _data: pd.DataFrame
+    _index_name: str
+    _hash_key: str
+
+    def __init__(self, series: pd.Series, *, index_name: str, col_name: str):
         # TODO make a copy?
         self._data = series
         self._index_name = index_name
@@ -244,6 +248,53 @@ class SeriesContainer:
         yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {self._index_name: self._data.index.values, self._col_name: self._data.values}, self._hash_key
+
+    def describe(self) -> Dict[str, Desc]:
+        return dict(self._desc)
+
+
+class DataFrameContainer:
+    _data: pd.DataFrame
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        *,
+        col_names: Union[Callable[[str], str], Dict[str, str]],
+        index_name: Optional[str] = None,
+    ):
+        # TODO make a copy?
+        self._data = df
+        self._index_name = index_name
+
+        if callable(col_names):
+            # TODO cache the function so we can replace the dataframe later?
+            self._col_name_dict = {k: col_names(k) for k in df.columns}
+        else:
+            self._col_name_dict = dict(col_names)
+
+        self._desc: Dict[str, Desc] = {}
+        if self._index_name is not None:
+            self._desc[self._index_name] = Desc([len(df)], df.index.dtype)
+        for col, out in self._col_name_dict.items():
+            self._desc[out] = Desc([len(df)], df[col].dtype)
+
+        self._hash_key = str(uuid.uuid4())
+
+    def query(
+        self,
+        data_bounds: Tuple[float, float, float, float],
+        size: Tuple[int, int],
+        xscale: Optional[str] = None,
+        yscale: Optional[str] = None,
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
+        ret = {}
+        if self._index_name is not None:
+            ret[self._index_name] = self._data.index.value
+        for col, out in self._col_name_dict.items():
+            ret[out] = self._data[col].values
+
+        return ret, self._hash_key
 
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
