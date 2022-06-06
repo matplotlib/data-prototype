@@ -77,6 +77,10 @@ class DataContainer(Protocol):
         """
 
 
+class NoNewKeys(ValueError):
+    ...
+
+
 class ArrayContainer:
     def __init__(self, **data):
         self._data = data
@@ -98,7 +102,10 @@ class ArrayContainer:
     def update(self, **data):
         # TODO check that this is still consistent with desc!
         if not all(k in self._data for k in data):
-            raise Exception("Can not add keys")
+            raise NoNewKeys(
+                f"The keys that currently exist are {set(self._data)}.  You "
+                f"tried to add {set(data) - set(self._data)!r}."
+            )
         self._data.update(data)
         self._cache_key = str(uuid.uuid4())
 
