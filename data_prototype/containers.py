@@ -16,7 +16,7 @@ class Desc:
     #   - is this a variable size depending on the query (e.g. N)
     #   - what is the relative size to the other variable values (N vs N+1)
     # We are probably going to have to implement a DSL for this (😞)
-    shape: List[Union[str, int]]
+    shape: Tuple[Union[str, int], ...]
     # TODO: is using a string better?
     dtype: np.dtype
     # TODO: do we want to include this at this level?  "naive" means unit-unaware.
@@ -124,9 +124,9 @@ class FuncContainer:
     def __init__(
         self,
         # TODO: is this really the best spelling?!
-        xfuncs: Optional[Dict[str, Tuple[List[Union[str, int]], Callable[[Any], Any]]]] = None,
-        yfuncs: Optional[Dict[str, Tuple[List[Union[str, int]], Callable[[Any], Any]]]] = None,
-        xyfuncs: Optional[Dict[str, Tuple[List[Union[str, int]], Callable[[Any, Any], Any]]]] = None,
+        xfuncs: Optional[Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any], Any]]]] = None,
+        yfuncs: Optional[Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any], Any]]]] = None,
+        xyfuncs: Optional[Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any, Any], Any]]]] = None,
     ):
         """
         A container that wraps several functions.  They are split into 3 categories:
@@ -192,8 +192,8 @@ class HistContainer:
         self._raw_data = raw_data
         self._num_bins = num_bins
         self._desc = {
-            "edges": Desc([num_bins + 1 + 2], np.dtype(float)),
-            "density": Desc([num_bins + 2], np.dtype(float)),
+            "edges": Desc((num_bins + 1 + 2,), np.dtype(float)),
+            "density": Desc((num_bins + 2,), np.dtype(float)),
         }
         self._full_range = (raw_data.min(), raw_data.max())
         self._cache: MutableMapping[Union[str, int], Any] = LFUCache(64)
@@ -242,8 +242,8 @@ class SeriesContainer:
         self._index_name = index_name
         self._col_name = col_name
         self._desc = {
-            index_name: Desc([len(series)], series.index.dtype),
-            col_name: Desc([len(series)], series.dtype),
+            index_name: Desc((len(series),), series.index.dtype),
+            col_name: Desc((len(series),), series.dtype),
         }
         self._hash_key = str(uuid.uuid4())
 
@@ -282,9 +282,9 @@ class DataFrameContainer:
 
         self._desc: Dict[str, Desc] = {}
         if self._index_name is not None:
-            self._desc[self._index_name] = Desc([len(df)], df.index.dtype)
+            self._desc[self._index_name] = Desc((len(df),), df.index.dtype)
         for col, out in self._col_name_dict.items():
-            self._desc[out] = Desc([len(df)], df[col].dtype)
+            self._desc[out] = Desc((len(df),), df[col].dtype)
 
         self._hash_key = str(uuid.uuid4())
 
