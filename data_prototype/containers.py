@@ -18,7 +18,7 @@ class Desc:
     # We are probably going to have to implement a DSL for this (😞)
     shape: List[Union[str, int]]
     # TODO: is using a string better?
-    dtype_str: np.dtype
+    dtype: np.dtype
     # TODO: do we want to include this at this level?  "naive" means unit-unaware.
     units: str = "naive"
 
