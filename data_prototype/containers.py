@@ -114,7 +114,7 @@ class RandomContainer:
         xscale: Optional[str] = None,
         yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        return {k: np.random.randn(d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
+        return {k: np.random.randn(*d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
 
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
