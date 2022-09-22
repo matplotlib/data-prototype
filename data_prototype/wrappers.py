@@ -112,7 +112,7 @@ class ProxyWrapperBase:
             # TODO find better way to placate mypy
             (int(round(bb_size[0])), int(round(bb_size[1]))),
             # TODO sort out how to spell the x/y scale
-            # TODO is scale enoguh?  What do we have to do about non-trivial projection?
+            # TODO is scale enough?  What do we have to do about non-trivial projection?
             xscale=None,
             yscale=None,
         )
@@ -131,7 +131,7 @@ class ProxyWrapperBase:
 
         # doing the nu work here is nice because we can write it once, but we
         # really want to push this computation down a layer
-        # TODO sort out how this interaporates with the transform stack
+        # TODO sort out how this interoperates with the transform stack
         data = {k: self.nus.get(k, lambda x: x)(v) for k, v in data.items()}
         self._cache[cache_key] = data
         return data
