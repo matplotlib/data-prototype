@@ -218,7 +218,7 @@ class HistContainer:
         hash_key = hash((xmin, xmax))
         if hash_key in self._cache:
             return self._cache[hash_key], hash_key
-        # TODO this gives an artifict with high lw
+        # TODO this gives an artifact with high lw
         edges_in = []
         if dmin < xmin:
             edges_in.append(np.array([dmin]))

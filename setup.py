@@ -37,7 +37,7 @@ setup(
     description="Experimental code for the upcoming Matplotlib data refactor.",
     long_description=readme,
     author="Thomas A Caswell",
-    author_email='tcaswll@gmail.com',
+    author_email='tcaswell@gmail.com',
     url='https://github.com/tacaswell/data_prototype',
     python_requires='>={}'.format('.'.join(str(n) for n in min_version)),
     packages=find_packages(exclude=['docs', 'tests']),
