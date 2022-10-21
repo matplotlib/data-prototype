@@ -54,7 +54,7 @@ class SinOfTime:
 
 
 def update(frame, art):
-    return (art,)
+    return art
 
 
 sot_c = SinOfTime()
@@ -73,7 +73,7 @@ ax.set_xlim(0, 2 * np.pi)
 ax.set_ylim(-1.1, 1.1)
 ani = FuncAnimation(
     fig,
-    partial(update, art=lw),
+    partial(update, art=(lw, fc)),
     frames=25,
     interval=1000 / 60,
     # TODO: blitting does not work because wrappers do not inherent from Artist
