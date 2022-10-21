@@ -14,11 +14,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import _Transform, DataContainer, Desc
+from data_prototype.containers import _Transform, Desc
 from data_prototype.wrappers import LineWrapper
 
 
-class SinOfTime(DataContainer):
+class SinOfTime:
     N = 1024
     # cycles per minutes
     scale = 10
