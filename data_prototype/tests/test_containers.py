@@ -1,5 +1,7 @@
 import numpy as np
 
+from matplotlib.transforms import IdentityTransform
+
 import pytest
 
 
@@ -12,7 +14,8 @@ def ac():
 
 
 def _verify_describe(container):
-    data, cache_key = container.query([0, 1, 0, 1], [100, 100], None, None)
+
+    data, cache_key = container.query(IdentityTransform(), [100, 100])
     desc = container.describe()
 
     assert set(data) == set(desc)
@@ -26,8 +29,8 @@ def test_array_describe(ac):
 
 
 def test_array_ignore_query(ac):
-    data, cache_key = ac.query([0, 1, 0, 1], [100, 100], None, None)
-    data2, cache_key_2 = ac.query([0, 2, 0, 2], [10, 10], None, None)
+    data, cache_key = ac.query(IdentityTransform(), [100, 100])
+    data2, cache_key_2 = ac.query(IdentityTransform(), [10, 10])
     assert cache_key == cache_key_2
 
     for k in set(data) | set(data2):
@@ -35,8 +38,8 @@ def test_array_ignore_query(ac):
 
 
 def test_array_cache_stable(ac):
-    data, cache_key = ac.query([0, 1, 0, 1], [100, 100], None, None)
-    data2, cache_key_2 = ac.query([0, 1, 0, 1], [100, 100], None, None)
+    data, cache_key = ac.query(IdentityTransform(), [100, 100])
+    data2, cache_key_2 = ac.query(IdentityTransform(), [100, 100])
     assert cache_key == cache_key_2
 
     for k in set(data) | set(data2):
@@ -44,9 +47,9 @@ def test_array_cache_stable(ac):
 
 
 def test_array_cache_update(ac):
-    data, cache_key = ac.query([0, 1, 0, 1], [100, 100], None, None)
+    data, cache_key = ac.query(IdentityTransform(), [100, 100])
     ac.update(**{k: v * 2 for k, v in data.items()})
-    data2, cache_key_2 = ac.query([0, 1, 0, 1], [100, 100], None, None)
+    data2, cache_key_2 = ac.query(IdentityTransform(), [100, 100])
 
     assert cache_key != cache_key_2
     for k in set(data) | set(data2):
@@ -68,6 +71,6 @@ def test_random_describe(rc):
 
 
 def test_random_ustable_cache(rc):
-    _, cache_key = rc.query([0, 1, 0, 1], [100, 100], None, None)
-    _, cache_key2 = rc.query([0, 1, 0, 1], [100, 100], None, None)
+    _, cache_key = rc.query(IdentityTransform(), [100, 100])
+    _, cache_key2 = rc.query(IdentityTransform(), [100, 100])
     assert cache_key != cache_key2
