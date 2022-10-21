@@ -2,10 +2,18 @@ from dataclasses import dataclass
 from typing import Protocol, List, Dict, Tuple, Optional, Any, Union, Callable, MutableMapping
 import uuid
 
+from cachetools import LFUCache
+
 import numpy as np
 import pandas as pd
 
-from cachetools import LFUCache
+
+class _Transform(Protocol):
+    def transform(self, verts):
+        ...
+
+    def __sub__(self, other) -> "_Transform":
+        ...
 
 
 @dataclass(frozen=True)
@@ -27,10 +35,8 @@ class DataContainer(Protocol):
     def query(
         self,
         # TODO 3D?!!
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         """
         Query the data container for data.
@@ -40,20 +46,13 @@ class DataContainer(Protocol):
 
         Parameters
         ----------
-        data_bounds : 4 floats
-            xmin, xmax, ymin, ymax
-
-            The bounds in data-coordinates of interest.
+        transform : matplotlib.transform.Transform
+            Must go from axes fraction space -> data space
 
         size : 2 integers
             xpixels, ypixels
 
             The size in screen / render units that we have to fill.
-
-        xscale, yscale : str or None
-            If the underlying scale is non-linear we may not want to sample
-            the data linearly.  For example if the scale is log, we probably
-            want to sample the data evenly in log space.
 
         Returns
         -------
@@ -89,10 +88,8 @@ class ArrayContainer:
 
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return dict(self._data), self._cache_key
 
@@ -116,10 +113,8 @@ class RandomContainer:
 
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {k: np.random.randn(*d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
 
@@ -171,18 +166,34 @@ class FuncContainer:
 
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        hash_key = hash((data_bounds, size, xscale, yscale))
+        # TODO find a better way to compute the hash key, this is not sentative to
+        # scale changes, only limit changes
+        data_bounds = tuple(transform.transform([[0, 0], [1, 1]]).flatten())
+        hash_key = hash((data_bounds, size))
         if hash_key in self._cache:
             return self._cache[hash_key], hash_key
-        xmin, xmax, ymin, ymax = data_bounds
+
         xpix, ypix = size
-        x_data = np.linspace(xmin, xmax, int(xpix) * 2)
-        y_data = np.linspace(ymin, ymax, int(ypix) * 2)
+        x_data, _ = transform.transform(
+            np.vstack(
+                [
+                    np.linspace(0, 1, int(xpix) * 2),
+                    np.zeros(int(xpix) * 2),
+                ]
+            ).T
+        ).T
+        _, y_data = transform.transform(
+            np.vstack(
+                [
+                    np.zeros(int(ypix) * 2),
+                    np.linspace(0, 1, int(ypix) * 2),
+                ]
+            ).T
+        ).T
+
         ret = self._cache[hash_key] = dict(
             **{k: f(x_data) for k, f in self._xfuncs.items()},
             **{k: f(y_data) for k, f in self._yfuncs.items()},
@@ -207,13 +218,12 @@ class HistContainer:
 
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         dmin, dmax = self._full_range
-        xmin, xmax, *ybounds = data_bounds
+        xmin, ymin, xmax, ymax = transform.transform([[0, 0], [1, 1]]).flatten()
+
         xmin, xmax = np.clip([xmin, xmax], dmin, dmax)
         hash_key = hash((xmin, xmax))
         if hash_key in self._cache:
@@ -256,10 +266,8 @@ class SeriesContainer:
 
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {self._index_name: self._data.index.values, self._col_name: self._data.values}, self._hash_key
 
@@ -297,10 +305,8 @@ class DataFrameContainer:
 
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         ret = {}
         if self._index_name is not None:
@@ -317,10 +323,8 @@ class DataFrameContainer:
 class WebServiceContainer:
     def query(
         self,
-        data_bounds: Tuple[float, float, float, float],
+        transform: _Transform,
         size: Tuple[int, int],
-        xscale: Optional[str] = None,
-        yscale: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def hit_some_database():
             {}, "1"
