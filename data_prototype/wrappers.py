@@ -92,6 +92,9 @@ class ProxyWrapperBase:
     def draw(self, renderer):
         raise NotImplementedError
 
+    def _update_wrapped(self, data):
+        raise NotImplementedError
+
     def _query_and_transform(self, renderer, *, xunits: List[str], yunits: List[str]) -> Dict[str, Any]:
         """
         Helper to centralize the data querying and python-side transforms
@@ -104,7 +107,7 @@ class ProxyWrapperBase:
         """
         # extract what we need to about the axes to query the data
         ax = self.axes
-        if getattr(ax, '_axesfraction_to_data', None) is None:
+        if getattr(ax, "_axesfraction_to_data", None) is None:
             ax._axesfraction_to_data = ax.transAxes - ax.transData
         # TODO do we want to trust the implicit renderer on the Axes?
         ax_bbox = ax.get_window_extent(renderer)
@@ -178,9 +181,13 @@ class LineWrapper(ProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        data = self._query_and_transform(renderer, xunits=["x"], yunits=["y"])
-        self._wrapped_instance.set_data(data["x"], data["y"])
+        self._update_wrapped(
+            self._query_and_transform(renderer, xunits=["x"], yunits=["y"]),
+        )
         return self._wrapped_instance.draw(renderer)
+
+    def _update_wrapped(self, data):
+        self._wrapped_instance.set_data(data["x"], data["y"])
 
 
 class ImageWrapper(ProxyWrapper):
@@ -193,10 +200,14 @@ class ImageWrapper(ProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        data = self._query_and_transform(renderer, xunits=["xextent"], yunits=["yextent"])
+        data = self._update_wrapped(
+            self._query_and_transform(renderer, xunits=["xextent"], yunits=["yextent"]),
+        )
+        return self._wrapped_instance.draw(renderer)
+
+    def _update_wrapped(self, data):
         self._wrapped_instance.set_array(data["image"])
         self._wrapped_instance.set_extent([*data["xextent"], *data["yextent"]])
-        return self._wrapped_instance.draw(renderer)
 
 
 class StepWrapper(ProxyWrapper):
@@ -209,9 +220,13 @@ class StepWrapper(ProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        data = self._query_and_transform(renderer, xunits=["edges"], yunits=["density"])
-        self._wrapped_instance.set_data(data["density"], data["edges"])
+        self._update_wrapped(
+            self._query_and_transform(renderer, xunits=["edges"], yunits=["density"]),
+        )
         return self._wrapped_instance.draw(renderer)
+
+    def _update_wrapped(self, data):
+        self._wrapped_instance.set_data(data["density"], data["edges"])
 
 
 @_forwarder(
@@ -278,9 +293,15 @@ class ErrorbarWrapper(MultiProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        data = self._query_and_transform(
-            renderer, xunits=["x", "xupper", "xlower"], yunits=["y", "yupper", "ylower"]
+        self._update_wrapped(
+            self._query_and_transform(
+                renderer, xunits=["x", "xupper", "xlower"], yunits=["y", "yupper", "ylower"]
+            ),
         )
+        for k, v in self._wrapped_instances.items():
+            v.draw(renderer)
+
+    def _update_wrapped(self, data):
         self._wrapped_instances["l0"].set_data(data["x"], data["y"])
 
         def set_or_hide(check_key, artist, xkey, ykey):
@@ -318,6 +339,3 @@ class ErrorbarWrapper(MultiProxyWrapper):
 
         else:
             self._wrapped_instances["xbars"].set_visible(False)
-
-        for k, v in self._wrapped_instances.items():
-            v.draw(renderer)
