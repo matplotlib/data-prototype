@@ -29,7 +29,7 @@ class _Axes(Protocol):
 
     transData: _Transform
     transAxes: _Transform
-    _axesfraction_to_data: _Transform | None
+    _axesfraction_to_data: _Transform
 
     def get_xlim(self) -> Tuple[float, float]:
         ...
