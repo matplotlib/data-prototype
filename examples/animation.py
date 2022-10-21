@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 from data_prototype.containers import _Transform, Desc
-from data_prototype.wrappers import LineWrapper
+
+from data_prototype.wrappers import LineWrapper, FormatedText
 
 
 class SinOfTime:
@@ -46,7 +47,7 @@ class SinOfTime:
                 "x": th,
                 "y": np.sin(th + phase),
                 "phase": phase,
-                "time": time,
+                "time": cur_time,
             }, hash(cur_time)
 
         return next_time()
@@ -58,9 +59,16 @@ def update(frame, art):
 
 sot_c = SinOfTime()
 lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
-
+fc = FormatedText(
+    sot_c,
+    "ϕ={phase:.2f}  ".format,
+    x=2 * np.pi,
+    y=1,
+    ha="right",
+)
 fig, ax = plt.subplots()
 ax.add_artist(lw)
+ax.add_artist(fc)
 ax.set_xlim(0, 2 * np.pi)
 ax.set_ylim(-1.1, 1.1)
 ani = FuncAnimation(

@@ -8,6 +8,7 @@ from functools import partial, wraps
 from matplotlib.lines import Line2D as _Line2D
 from matplotlib.image import AxesImage as _AxesImage
 from matplotlib.patches import StepPatch as _StepPatch
+from matplotlib.text import Text as _Text
 from matplotlib.collections import LineCollection as _LineCollection
 from matplotlib.artist import Artist as _Artist
 
@@ -227,6 +228,26 @@ class StepWrapper(ProxyWrapper):
 
     def _update_wrapped(self, data):
         self._wrapped_instance.set_data(data["density"], data["edges"])
+
+
+class FormatedText(ProxyWrapper):
+    _wrapped_class = _Text
+    _privtized_methods = ("set_text",)
+
+    def __init__(self, data: DataContainer, format_func, nus=None, /, **kwargs):
+        super().__init__(data, nus)
+        self._wrapped_instance = self._wrapped_class(text="", **kwargs)
+        self._format_func = format_func
+
+    @_stale_wrapper
+    def draw(self, renderer):
+        self._update_wrapped(
+            self._query_and_transform(renderer, xunits=[], yunits=[]),
+        )
+        return self._wrapped_instance.draw(renderer)
+
+    def _update_wrapped(self, data):
+        self._wrapped_instance.set_text(self._format_func(**data))
 
 
 @_forwarder(
