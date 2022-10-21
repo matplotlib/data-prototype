@@ -320,6 +320,47 @@ class DataFrameContainer:
         return dict(self._desc)
 
 
+class ReNamer:
+    def __init__(self, data: DataContainer, mapping: Dict[str, str]):
+        # TODO: check all the asked for key exist
+        self._data = data
+        self._mapping = mapping
+
+    def query(
+        self,
+        transform: _Transform,
+        size: Tuple[int, int],
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
+        base, cache_key = self._data.query(transform, size)
+        return {v: base[k] for k, v in self._mapping.items()}, cache_key
+
+    def describe(self):
+        base = self._data.describe()
+        return {v: base[k] for k, v in self._mapping.items()}
+
+
+class DataUnion:
+    def __init__(self, *data: DataContainer):
+        # TODO check no collisions
+        self._datas = data
+
+    def query(
+        self,
+        transform: _Transform,
+        size: Tuple[int, int],
+    ) -> Tuple[Dict[str, Any], Union[str, int]]:
+        cache_keys = []
+        ret = {}
+        for data in self._datas:
+            base, cache_key = data.query(transform, size)
+            ret.update(base)
+            cache_keys.append(cache_key)
+        return ret, hash(tuple(cache_keys))
+
+    def describe(self):
+        return {k: v for d in self._datas for k, v in d.describe().items()}
+
+
 class WebServiceContainer:
     def query(
         self,
