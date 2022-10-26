@@ -13,7 +13,7 @@ import pandas as pd
 from data_prototype.wrappers import LineWrapper
 from data_prototype.containers import FuncContainer, SeriesContainer
 
-fc = FuncContainer({"x": (("N", ), lambda x: x), "y": (("N", ), np.sin)})
+fc = FuncContainer({"x": (("N",), lambda x: x), "y": (("N",), np.sin)})
 lw = LineWrapper(fc, lw=5, color="green", label="sin (function)")
 
 th = np.linspace(0, 2 * np.pi, 16)

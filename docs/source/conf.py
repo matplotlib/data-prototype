@@ -18,12 +18,13 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 from pathlib import Path
 
 # are we running circle CI?
-CIRCLECI = 'CIRCLECI' in os.environ
+CIRCLECI = "CIRCLECI" in os.environ
 
 # -- General configuration ------------------------------------------------
 
@@ -35,18 +36,18 @@ CIRCLECI = 'CIRCLECI' in os.environ
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting',
-    'matplotlib.sphinxext.plot_directive',
-    'numpydoc',
-    'sphinx_copybutton',
-    'sphinx_gallery.gen_gallery',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.githubpages",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "IPython.sphinxext.ipython_directive",
+    "IPython.sphinxext.ipython_console_highlighting",
+    "matplotlib.sphinxext.plot_directive",
+    "numpydoc",
+    "sphinx_copybutton",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Configuration options for plot_directive. See:
@@ -63,8 +64,8 @@ is_release_build = False
 
 # Sphinx gallery configuration
 
-def matplotlib_reduced_latex_scraper(block, block_vars, gallery_conf,
-                                     **kwargs):
+
+def matplotlib_reduced_latex_scraper(block, block_vars, gallery_conf, **kwargs):
     """
     Reduce srcset when creating a PDF.
 
@@ -73,56 +74,59 @@ def matplotlib_reduced_latex_scraper(block, block_vars, gallery_conf,
     """
     from sphinx_gallery.scrapers import matplotlib_scraper
 
-    if gallery_conf['builder_name'] == 'latex':
-        gallery_conf['image_srcset'] = []
+    if gallery_conf["builder_name"] == "latex":
+        gallery_conf["image_srcset"] = []
     return matplotlib_scraper(block, block_vars, gallery_conf, **kwargs)
 
 
 sphinx_gallery_conf = {
-    'examples_dirs': ['../../examples', ],
-    'filename_pattern': '^((?!sgskip).)*$',
-    'gallery_dirs': ['gallery'],
-    'doc_module': ('data_prototype',),
-    'reference_url': {
-        'matplotlib': None,
+    "examples_dirs": [
+        "../../examples",
+    ],
+    "filename_pattern": "^((?!sgskip).)*$",
+    "gallery_dirs": ["gallery"],
+    "doc_module": ("data_prototype",),
+    "reference_url": {
+        "matplotlib": None,
     },
-    'backreferences_dir': Path('api') / Path('_as_gen'),
-    'remove_config_comments': True,
-    'min_reported_time': 1,
-    'thumbnail_size': (320, 224),
-    'image_scrapers': (matplotlib_reduced_latex_scraper, ),
+    "backreferences_dir": Path("api") / Path("_as_gen"),
+    "remove_config_comments": True,
+    "min_reported_time": 1,
+    "thumbnail_size": (320, 224),
+    "image_scrapers": (matplotlib_reduced_latex_scraper,),
     # Compression is a significant effort that we skip for local and CI builds.
-    'compress_images': ('thumbnails', 'images') if is_release_build else (),
-    'matplotlib_animations': True,
-    'image_srcset': ["2x"],
-    'junit': '../test-results/sphinx-gallery/junit.xml' if CIRCLECI else '',
+    "compress_images": ("thumbnails", "images") if is_release_build else (),
+    "matplotlib_animations": True,
+    "image_srcset": ["2x"],
+    "junit": "../test-results/sphinx-gallery/junit.xml" if CIRCLECI else "",
 }
 
 mathmpl_fontsize = 11.0
-mathmpl_srcset = ['2x']
+mathmpl_srcset = ["2x"]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = 'data_prototype'
-copyright = '2022, Thomas A Caswell'
-author = 'Thomas A Caswell'
+project = "data_prototype"
+copyright = "2022, Thomas A Caswell"
+author = "Thomas A Caswell"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 import data_prototype
+
 # The short X.Y version.
 version = data_prototype.__version__
 # The full version, including alpha/beta/rc tags.
@@ -141,7 +145,7 @@ release = data_prototype.__version__
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -160,14 +164,12 @@ html_theme = "mpl_sphinx_theme"
 # documentation.
 #
 
-html_theme_options = {
-    "logo": {}
-}
+html_theme_options = {"logo": {}}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -175,9 +177,9 @@ html_static_path = ['_static']
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
-    '**': [
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
+    "**": [
+        "relations.html",  # needs 'show_related': True theme option to display
+        "searchbox.html",
     ]
 }
 
@@ -185,7 +187,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'data_prototype'
+htmlhelp_basename = "data_prototype"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -194,15 +196,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -212,8 +211,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'data_prototype.tex', 'data_prototype Documentation',
-     'Contributors', 'manual'),
+    (master_doc, "data_prototype.tex", "data_prototype Documentation", "Contributors", "manual"),
 ]
 
 
@@ -221,10 +219,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'data_prototype', 'data_prototype Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "data_prototype", "data_prototype Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -233,19 +228,23 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'data_prototype', 'data_prototype Documentation',
-     author, 'data_prototype', 'Experimental code for the upcoming Matplotlib data refactor.',
-     'Miscellaneous'),
+    (
+        master_doc,
+        "data_prototype",
+        "data_prototype Documentation",
+        author,
+        "data_prototype",
+        "Experimental code for the upcoming Matplotlib data refactor.",
+        "Miscellaneous",
+    ),
 ]
-
-
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
-    'matplotlib': ('https://matplotlib.org/stable', None),
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
 }
