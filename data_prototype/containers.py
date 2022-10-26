@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Protocol, List, Dict, Tuple, Optional, Any, Union, Callable, MutableMapping
+from typing import Protocol, Dict, Tuple, Optional, Any, Union, Callable, MutableMapping
 import uuid
 
 from cachetools import LFUCache

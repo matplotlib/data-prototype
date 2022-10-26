@@ -199,7 +199,7 @@ class ImageWrapper(ProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        data = self._update_wrapped(
+        self._update_wrapped(
             self._query_and_transform(renderer, xunits=["xextent"], yunits=["yextent"]),
         )
         return self._wrapped_instance.draw(renderer)

@@ -7,5 +7,10 @@ exclude =
     versioneer.py,
     data_prototype/_version.py,
     docs/source/conf.py
+    setup.py
+    .eggs
+    docs/source/gallery
+    examples
 max-line-length = 115
-ignore = E203, W503  # Ignore some style 'errors' produced while formatting by 'black'
+# Ignore some style 'errors' produced while formatting by 'black' and docstrings (for now)
+ignore = E203, W503, D1, D3, D4

@@ -6,7 +6,7 @@ An animated line
 
 """
 import time
-from typing import Protocol, List, Dict, Tuple, Optional, Any, Union, Callable, MutableMapping
+from typing import Dict, Tuple, Any, Union
 from functools import partial
 
 import numpy as np
