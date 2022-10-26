@@ -4,4 +4,4 @@ Installation
 
 At the command line::
 
-    $ pip install data_prototype
+    $ pip install git+https://github.com/tacaswell/data-prototype.git@main
