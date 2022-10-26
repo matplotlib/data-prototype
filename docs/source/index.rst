@@ -10,7 +10,7 @@ This is prototype development for the next generation of data structures for
 Matplotlib.  This is the version "to throw away".  Everything in this
 repository should be considered experimental and used at you own risk.
 
-Source : [tacaswell/data-prototype](https://github.com/tacaswell/data-prototype) (for now)
+Source : https://github.com/tacaswell/data-prototype (for now)
 
 Examples
 --------
