@@ -57,7 +57,7 @@ plot_html_show_formats = False
 
 
 # Generate the API documentation when building
-autosummary_generate = True
+autosummary_generate = False
 numpydoc_show_class_members = False
 
 is_release_build = False
