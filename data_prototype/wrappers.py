@@ -30,7 +30,6 @@ class _Axes(Protocol):
 
     transData: _Transform
     transAxes: _Transform
-    _axesfraction_to_data: _Transform
 
     def get_xlim(self) -> Tuple[float, float]:
         ...
@@ -108,8 +107,6 @@ class ProxyWrapperBase:
         """
         # extract what we need to about the axes to query the data
         ax = self.axes
-        if getattr(ax, "_axesfraction_to_data", None) is None:
-            ax._axesfraction_to_data = ax.transAxes - ax.transData
         # TODO do we want to trust the implicit renderer on the Axes?
         ax_bbox = ax.get_window_extent(renderer)
 
@@ -117,8 +114,9 @@ class ProxyWrapperBase:
         # and key to use for caching.
         bb_size = ax_bbox.size
         data, cache_key = self.data.query(
-            # TODO do this need to be (de) unitized
-            ax._axesfraction_to_data,
+            # TODO do this needs to be (de) unitized
+            # TODO figure out why caching this did not work
+            ax.transAxes - ax.transData,
             # TODO find better way to placate mypy
             (int(round(bb_size[0])), int(round(bb_size[1]))),
         )
