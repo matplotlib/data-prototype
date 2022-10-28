@@ -197,13 +197,13 @@ class ImageWrapper(ProxyWrapper):
         print(kwargs, nus)
         nus = dict(nus or {})
         if cmap is not None or norm is not None:
-            if nus is not None and 'image' in nus:
+            if nus is not None and "image" in nus:
                 raise ValueError("Conflicting input")
             if cmap is None:
-                cmap = mpl.colormaps['viridis']
+                cmap = mpl.colormaps["viridis"]
             if norm is None:
                 raise ValueError("not sure how to do autoscaling yet")
-            nus['image'] = lambda image: cmap(norm(image))
+            nus["image"] = lambda image: cmap(norm(image))
         super().__init__(data, nus)
         kwargs.setdefault("origin", "lower")
         self._wrapped_instance = self._wrapped_class(None, **kwargs)
