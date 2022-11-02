@@ -5,6 +5,7 @@ import numpy as np
 from cachetools import LFUCache
 from functools import partial, wraps
 
+import matplotlib as mpl
 from matplotlib.lines import Line2D as _Line2D
 from matplotlib.image import AxesImage as _AxesImage
 from matplotlib.patches import StepPatch as _StepPatch
@@ -192,7 +193,17 @@ class LineWrapper(ProxyWrapper):
 class ImageWrapper(ProxyWrapper):
     _wrapped_class = _AxesImage
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
+    def __init__(self, data: DataContainer, nus=None, /, cmap=None, norm=None, **kwargs):
+        print(kwargs, nus)
+        nus = dict(nus or {})
+        if cmap is not None or norm is not None:
+            if nus is not None and "image" in nus:
+                raise ValueError("Conflicting input")
+            if cmap is None:
+                cmap = mpl.colormaps["viridis"]
+            if norm is None:
+                raise ValueError("not sure how to do autoscaling yet")
+            nus["image"] = lambda image: cmap(norm(image))
         super().__init__(data, nus)
         kwargs.setdefault("origin", "lower")
         self._wrapped_instance = self._wrapped_class(None, **kwargs)
