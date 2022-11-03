@@ -255,4 +255,4 @@ intersphinx_mapping = {
 }
 
 
-default_role = 'obj'
+default_role = "obj"
