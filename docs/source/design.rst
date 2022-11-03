@@ -38,7 +38,7 @@ is applied) between artists; each ``Artist`` stores it's data in its own way
 
 With this view, we can understand the `~matplotlib.artist.Artist.draw` methods
 to be very extensively `curried
-<https://en.wikipedia.org/wiki/Curry_(programming_language)>`__ version of
+<https://en.wikipedia.org/wiki/Currying>`__ version of
 these function chains where the objects allow us to modify the arguments to the
 functions.
 
