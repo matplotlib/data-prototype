@@ -126,6 +126,7 @@ class ProxyWrapperBase:
         # actually query the underlying data.  This returns both the (raw) data
         # and key to use for caching.
         bb_size = ax_bbox.size
+        # Step 1
         data, cache_key = self.data.query(
             # TODO do this needs to be (de) unitized
             # TODO figure out why caching this did not work
@@ -138,7 +139,8 @@ class ProxyWrapperBase:
             return self._cache[cache_key]
         except KeyError:
             ...
-        # TODO decide if units go pre-nu or post-nu?
+
+        # Step 2
         for x_like in xunits:
             if x_like in data:
                 data[x_like] = ax.xaxis.convert_units(data[x_like])
@@ -146,6 +148,7 @@ class ProxyWrapperBase:
             if y_like in data:
                 data[y_like] = ax.xaxis.convert_units(data[y_like])
 
+        # Step 3
         # doing the nu work here is nice because we can write it once, but we
         # really want to push this computation down a layer
         # TODO sort out how this interoperates with the transform stack

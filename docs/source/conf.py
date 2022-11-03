@@ -55,6 +55,7 @@ extensions = [
 plot_html_show_source_link = False
 plot_html_show_formats = False
 
+hmathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
 
 # Generate the API documentation when building
 autosummary_generate = False
@@ -157,7 +158,7 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "mpl_sphinx_theme"
+# html_theme = "mpl_sphinx_theme"
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -250,4 +251,8 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
     "matplotlib": ("https://matplotlib.org/stable", None),
+    "networkx": ("https://networkx.org/documentation/stable", None),
 }
+
+
+default_role = 'obj'
