@@ -99,6 +99,7 @@ sphinx_gallery_conf = {
     "matplotlib_animations": True,
     "image_srcset": ["2x"],
     "junit": "../test-results/sphinx-gallery/junit.xml" if CIRCLECI else "",
+    "run_stale_examples": True,
 }
 
 mathmpl_fontsize = 11.0
