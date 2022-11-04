@@ -47,6 +47,15 @@ class _Aritst(Protocol):
     axes: _Axes
 
 
+def _make_identity(k):
+    def identity(**kwargs):
+        (_,) = kwargs.values()
+        return _
+
+    identity.__signature__ = inspect.Signature([inspect.Parameter(k, inspect.Parameter.POSITIONAL_OR_KEYWORD)])
+    return identity
+
+
 def _forwarder(forwards, cls=None):
     if cls is None:
         return partial(_forwarder, forwards)
@@ -90,6 +99,7 @@ class ProxyWrapperBase:
     axes: _Axes
     stale: bool
     required_keys: set = set()
+    expected_keys: set = set()
 
     @_stale_wrapper
     def draw(self, renderer):
@@ -143,8 +153,6 @@ class ProxyWrapperBase:
         for k, (nu, sig) in self._sigs.items():
             to_pass = set(sig.parameters)
             transformed_data[k] = nu(**{k: data[k] for k in to_pass})
-        for k, v in data.items():
-            transformed_data.setdefault(k, v)
 
         self._cache[cache_key] = transformed_data
         return transformed_data
@@ -156,16 +164,11 @@ class ProxyWrapperBase:
         # TODO make sure mutating this will invalidate the cache!
         self._nus = nus or {}
         for k in self.required_keys:
-
-            def identity(**kwargs):
-                (_,) = kwargs.values()
-                return _
-
-            identity.__signature__ = inspect.Signature(
-                [inspect.Parameter(k, inspect.Parameter.POSITIONAL_OR_KEYWORD)]
-            )
-
-            self._nus.setdefault(k, identity)
+            self._nus.setdefault(k, _make_identity(k))
+        desc = data.describe()
+        for k in self.expected_keys:
+            if k in desc:
+                self._nus.setdefault(k, _make_identity(k))
         self._sigs = {k: (nu, inspect.signature(nu)) for k, nu in self._nus.items()}
         self.stale = True
 
@@ -325,6 +328,9 @@ class MultiProxyWrapper(ProxyWrapperBase, _Artist):
 
 
 class ErrorbarWrapper(MultiProxyWrapper):
+    required_keys = {"x", "y"}
+    expected_keys = {f"{axis}{dirc}" for axis in ["x", "y"] for dirc in ["upper", "lower"]}
+
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
         # TODO all of the kwarg teasing apart that is needed
