@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Protocol, Tuple, get_type_hints
+import inspect
 
 import numpy as np
 
@@ -88,6 +89,7 @@ class ProxyWrapperBase:
     data: DataContainer
     axes: _Axes
     stale: bool
+    required_keys: set = set()
 
     @_stale_wrapper
     def draw(self, renderer):
@@ -137,17 +139,37 @@ class ProxyWrapperBase:
         # doing the nu work here is nice because we can write it once, but we
         # really want to push this computation down a layer
         # TODO sort out how this interoperates with the transform stack
-        data = {k: self.nus.get(k, lambda x: x)(v) for k, v in data.items()}
-        self._cache[cache_key] = data
-        return data
+        transformed_data = {}
+        for k, (nu, sig) in self._sigs.items():
+            to_pass = set(sig.parameters)
+            transformed_data[k] = nu(**{k: data[k] for k in to_pass})
+        self._cache[cache_key] = transformed_data
+        return transformed_data
 
     def __init__(self, data, nus, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self._cache = LFUCache(64)
         # TODO make sure mutating this will invalidate the cache!
-        self.nus = nus or {}
+        self._nus = nus or {}
+        for k in self.required_keys:
+
+            def identity(**kwargs):
+                (_,) = kwargs.values()
+                return _
+
+            identity.__signature__ = inspect.Signature(
+                [inspect.Parameter(k, inspect.Parameter.POSITIONAL_OR_KEYWORD)]
+            )
+
+            self._nus.setdefault(k, identity)
+        self._sigs = {k: (nu, inspect.signature(nu)) for k, nu in self._nus.items()}
         self.stale = True
+
+    # TODO add a setter
+    @property
+    def nus(self):
+        return dict(self._nus)
 
 
 class ProxyWrapper(ProxyWrapperBase):
@@ -163,7 +185,7 @@ class ProxyWrapper(ProxyWrapperBase):
         return getattr(self._wrapped_instance, key)
 
     def __setattr__(self, key, value):
-        if key in ("_wrapped_instance", "data", "_cache", "nus", "stale"):
+        if key in ("_wrapped_instance", "data", "_cache", "_nus", "stale", "_sigs"):
             super().__setattr__(key, value)
         elif hasattr(self, "_wrapped_instance") and hasattr(self._wrapped_instance, key):
             setattr(self._wrapped_instance, key, value)
@@ -174,6 +196,7 @@ class ProxyWrapper(ProxyWrapperBase):
 class LineWrapper(ProxyWrapper):
     _wrapped_class = _Line2D
     _privtized_methods = ("set_xdata", "set_ydata", "set_data", "get_xdata", "get_ydata", "get_data")
+    required_keys = {"x", "y"}
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
@@ -188,6 +211,7 @@ class LineWrapper(ProxyWrapper):
 
     def _update_wrapped(self, data):
         for k, v in data.items():
+            k = {"x": "xdata", "y": "ydata"}.get(k, k)
             getattr(self._wrapped_instance, f"set_{k}")(v)
 
 
@@ -244,10 +268,9 @@ class FormatedText(ProxyWrapper):
     _wrapped_class = _Text
     _privtized_methods = ("set_text",)
 
-    def __init__(self, data: DataContainer, format_func, nus=None, /, **kwargs):
+    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
         self._wrapped_instance = self._wrapped_class(text="", **kwargs)
-        self._format_func = format_func
 
     @_stale_wrapper
     def draw(self, renderer):
@@ -257,7 +280,9 @@ class FormatedText(ProxyWrapper):
         return self._wrapped_instance.draw(renderer)
 
     def _update_wrapped(self, data):
-        self._wrapped_instance.set_text(self._format_func(**data))
+        for k, v in data.items():
+            k = {"x": "xdata", "y": "ydata"}.get(k, k)
+            getattr(self._wrapped_instance, f"set_{k}")(v)
 
 
 @_forwarder(
