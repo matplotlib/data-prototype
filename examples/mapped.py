@@ -21,7 +21,7 @@ cmap.set_over("k")
 cmap.set_under("r")
 norm = Normalize(1, 8)
 
-nus = {
+line_nus = {
     # arbitrary functions
     "lw": lambda lw: min(1 + lw, 5),
     # standard color mapping
@@ -29,6 +29,12 @@ nus = {
     # categorical
     "ls": lambda cat: {"A": "-", "B": ":", "C": "--"}[cat[()]],
 }
+
+text_nus = {
+    "text": lambda j, cat: f"index={j[()]} class={cat[()]!r}",
+    "y": lambda j: j,
+}
+
 
 th = np.linspace(0, 2 * np.pi, 128)
 delta = np.pi / 9
@@ -48,13 +54,13 @@ for j in range(10):
     ax.add_artist(
         LineWrapper(
             ac,
-            nus,
+            line_nus,
         )
     )
     ax.add_artist(
         FormatedText(
             ac,
-            {"text": lambda j, cat: f"index={j[()]} class={cat[()]!r}", "y": lambda j: j},
+            text_nus,
             x=2 * np.pi,
             ha="right",
             bbox={"facecolor": "gray", "alpha": 0.5},
