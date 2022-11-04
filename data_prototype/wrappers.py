@@ -219,7 +219,6 @@ class ImageWrapper(ProxyWrapper):
     _wrapped_class = _AxesImage
 
     def __init__(self, data: DataContainer, nus=None, /, cmap=None, norm=None, **kwargs):
-        print(kwargs, nus)
         nus = dict(nus or {})
         if cmap is not None or norm is not None:
             if nus is not None and "image" in nus:
