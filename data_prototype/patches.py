@@ -45,12 +45,12 @@ class PatchWrapper(ProxyWrapper):
     }
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+        super().__init__(data, nus, xunits=self._xunits, yunits=self._yunits)
         self._wrapped_instance = self._wrapped_class([0, 0], 0, 0, **kwargs)
 
     @_stale_wrapper
     def draw(self, renderer):
-        self._update_wrapped(self._query_and_transform(renderer, xunits=self._xunits, yunits=self._yunits))
+        self._update_wrapped(self._query_and_transform(renderer))
         return self._wrapped_instance.draw(renderer)
 
     def _update_wrapped(self, data):
