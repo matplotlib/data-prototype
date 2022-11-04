@@ -187,7 +187,8 @@ class LineWrapper(ProxyWrapper):
         return self._wrapped_instance.draw(renderer)
 
     def _update_wrapped(self, data):
-        self._wrapped_instance.set_data(data["x"], data["y"])
+        for k, v in data.items():
+            getattr(self._wrapped_instance, f"set_{k}")(v)
 
 
 class ImageWrapper(ProxyWrapper):
