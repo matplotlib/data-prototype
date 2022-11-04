@@ -143,6 +143,9 @@ class ProxyWrapperBase:
         for k, (nu, sig) in self._sigs.items():
             to_pass = set(sig.parameters)
             transformed_data[k] = nu(**{k: data[k] for k in to_pass})
+        for k, v in data.items():
+            transformed_data.setdefault(k, v)
+
         self._cache[cache_key] = transformed_data
         return transformed_data
 
