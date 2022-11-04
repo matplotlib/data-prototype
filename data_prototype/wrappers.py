@@ -217,6 +217,7 @@ class LineWrapper(ProxyWrapper):
 
 class ImageWrapper(ProxyWrapper):
     _wrapped_class = _AxesImage
+    required_keys = {"xextent", "yextent", "image"}
 
     def __init__(self, data: DataContainer, nus=None, /, cmap=None, norm=None, **kwargs):
         nus = dict(nus or {})
@@ -247,6 +248,7 @@ class ImageWrapper(ProxyWrapper):
 class StepWrapper(ProxyWrapper):
     _wrapped_class = _StepPatch
     _privtized_methods = ()  # ("set_data", "get_data")
+    required_keys = {"edges", "density"}
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
