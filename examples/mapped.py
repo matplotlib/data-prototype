@@ -9,7 +9,6 @@ Leveraging the nu functions to transform users space data to visualization data.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from matplotlib.colors import Normalize
 

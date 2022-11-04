@@ -61,7 +61,7 @@ sot_c = SinOfTime()
 lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
 fc = FormatedText(
     sot_c,
-    {'text': lambda phase: f"ϕ={phase:.2f}"},
+    {"text": lambda phase: f"ϕ={phase:.2f}"},
     x=2 * np.pi,
     y=1,
     ha="right",
