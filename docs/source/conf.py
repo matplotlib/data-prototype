@@ -163,8 +163,10 @@ html_theme = "mpl_sphinx_theme"
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-
-html_theme_options = {"logo": {}}
+html_logo = "_static/logo2.svg"
+html_theme_options = {
+    "logo": {"link": "index", "image_light": "images/logo2.svg", "image_dark": "images/logo_dark.svg"},
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
