@@ -280,7 +280,6 @@ class FormatedText(ProxyWrapper):
 
     def _update_wrapped(self, data):
         for k, v in data.items():
-            k = {"x": "xdata", "y": "ydata"}.get(k, k)
             getattr(self._wrapped_instance, f"set_{k}")(v)
 
 
