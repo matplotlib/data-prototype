@@ -6,7 +6,7 @@ There will always be ideas that spark an afternoon of "What if I tried XYZ, how 
 This is primarily folloing a "breadth-first" approach
 
 
-## Phase 1: Low-level artists
+## Phase 1: Low-level artists, Data pipeline
 
 The purpose of some of the earliest work is to lay foundations without direct regard for replicating existing APIs.
 To be clear, all properties of these artists that are used by existing APIs must be present, but explicitly leaving out things like default behavior.
@@ -18,12 +18,13 @@ Including:
   - Collections (various)
   - Text/annotations
   - Legend
+  - Unit handling
+  - Data pipeline
 
 Explicitly not including in the first set:
   - Axis/Axes/Figure artists
   - Tick
   - Hyper-specific use case artists like QuiverKey/Table (these can be added when focusing on that usecase)
-  - Unit handling
 
 These artists carry some of the overall architectural decisions to be made about this API, and pinning them in too early is likely to paint us in corners that will be more difficult to reverse course on rather than holding off until some of the API basics are worked out
 
@@ -52,7 +53,7 @@ This phase solidifies some of the core ideas linking the Data layer and the Arti
 This will include focusing on many of the common Axes functions which return artists, including `plot`, `scatter`, `pcolor`, `contour`, etc.
 
 Questions to be answered during this phase:
- - Unit handling
+ - Unit handling (finalization)
  - Can the Data API be useful outside of mpl?
  - What is needed for full API compatibility such that existing methods can be rewritten to use the new API?
  - How should axes/axis/figures/ticks be handled?
