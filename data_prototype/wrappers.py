@@ -199,6 +199,7 @@ class ProxyWrapper(ProxyWrapperBase):
         else:
             super().__setattr__(key, value)
 
+
 class LineWrapper(ProxyWrapper):
     _wrapped_class = _Line2D
     _privtized_methods = ("set_xdata", "set_ydata", "set_data", "get_xdata", "get_ydata", "get_data")
@@ -220,12 +221,21 @@ class LineWrapper(ProxyWrapper):
             k = {"x": "xdata", "y": "ydata"}.get(k, k)
             getattr(self._wrapped_instance, f"set_{k}")(v)
 
+
 class PathCollectionWrapper(ProxyWrapper):
     _wrapped_class = _PathCollection
     _privtized_methods = (
-            "set_facecolors", "set_edgecolors", "set_offsets", "set_sizes", "set_paths",
-            "get_facecolors", "get_edgecolors", "get_offsets", "get_sizes", "get_paths",
-            )
+        "set_facecolors",
+        "set_edgecolors",
+        "set_offsets",
+        "set_sizes",
+        "set_paths",
+        "get_facecolors",
+        "get_edgecolors",
+        "get_offsets",
+        "get_sizes",
+        "get_paths",
+    )
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
@@ -246,7 +256,6 @@ class PathCollectionWrapper(ProxyWrapper):
         self._wrapped_instance.set_facecolors(data["facecolors"])
         self._wrapped_instance.set_edgecolors(data["edgecolors"])
         self._wrapped_instance.set_sizes(data["sizes"])
-
 
 
 class ImageWrapper(ProxyWrapper):

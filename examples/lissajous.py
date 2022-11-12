@@ -46,13 +46,13 @@ class Lissajous:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def next_time():
             cur_time = time.time()
-            cur_time = np.array([cur_time, cur_time-.1, cur_time-.2, cur_time-0.3])
+            cur_time = np.array([cur_time, cur_time - 0.1, cur_time - 0.2, cur_time - 0.3])
 
-            phase = 15*np.pi * (self.scale * cur_time % 60) / 150
+            phase = 15 * np.pi * (self.scale * cur_time % 60) / 150
             marker_obj = mmarkers.MarkerStyle("o")
             return {
-                "x": np.cos(5*phase),
-                "y": np.sin(3*phase),
+                "x": np.cos(5 * phase),
+                "y": np.sin(3 * phase),
                 "phase": phase[0],
                 "sizes": np.array([256]),
                 "paths": [marker_obj.get_path().transformed(marker_obj.get_transform())],
@@ -83,13 +83,13 @@ ax.set_ylim(-1.1, 1.1)
 lw = PathCollectionWrapper(sot_c, offset_transform=ax.transData)
 ax.add_artist(lw)
 ax.add_artist(fc)
-#ax.set_xticks([])
-#ax.set_yticks([])
+# ax.set_xticks([])
+# ax.set_yticks([])
 ax.set_aspect(1)
 ani = FuncAnimation(
     fig,
     partial(update, art=(lw, fc)),
-    frames=60*15,
+    frames=60 * 15,
     interval=1000 / 100,
     # TODO: blitting does not work because wrappers do not inherent from Artist
     # blit=True,
