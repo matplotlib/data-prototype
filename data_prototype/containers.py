@@ -37,6 +37,7 @@ class DataContainer(Protocol):
         # TODO 3D?!!
         coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
+        /,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         """
         Query the data container for data.
