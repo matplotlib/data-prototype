@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import _Transform, Desc
+from data_prototype.containers import _MatplotlibTransform, Desc
 
 from data_prototype.wrappers import LineWrapper, FormatedText
 
@@ -34,7 +34,7 @@ class SinOfTime:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transformtransform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         th = np.linspace(0, 2 * np.pi, self.N)
