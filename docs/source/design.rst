@@ -44,10 +44,9 @@ version of these function chains where the objects allow us to modify the
 arguments to the functions and the re-run them.
 
 The goal of this work is to bring this structure more to the foreground in the
-internal structure of Matplotlib.  By exposing this inherent structure
-uniformity in the architecture of Matplotlib the library will be easier to
-reason about and easier to extend by injecting custom logic at each of
-the steps
+internal structure of Matplotlib.  By exposing this inherent structure in the
+architecture of Matplotlib the library will be easier to reason about and
+easier to extend by injecting custom logic at each of the steps.
 
 A paper with the formal mathematical description of these ideas is in
 preparation.
@@ -58,41 +57,48 @@ Data pipeline
 Get the data (Step 1)
 ---------------------
 
-In this context "data" is post any data-to-data transformations or
-aggregations.  There is already extensive tooling and literature around that
-aspect.  By completely decoupling the aggregations pipeline from the
-visualization process we are able to both simplify and generalize the problem.
+In this context "data" is post any data-to-data transformations or aggregation
+steps.  There is already extensive tooling and literature around that aspect
+which we do not need to recreate.  By completely decoupling the aggregations
+pipeline from the visualization process we are able to both simplify and
+generalize the software.
 
 Currently, almost all ``Artist`` classes store the data they are representing
 as attributes on the instances as realized `numpy.array` [#]_ objects.  On one
-hand, this can be very useful as historically data was frequently already in
+hand, this can be very convenient as data is frequently already in
 `numpy.array` objects in the users' namespace.  If you know the right methods
 for *this* ``Artist``, you can query or update the data without recreating the
-Artist.  This is technically consistent with the scheme laid out above if we
-understand ``self.x[:]`` as ``self.x.__getitem__(slice())`` which is a function
-call.
+``Artist``.  This is technically consistent with the scheme laid out above if
+we understand ``self.x[:]`` as ``self.x.__getitem__(slice())`` which is the
+function call in step 1.
 
-However, this method of storing the data has several drawbacks.  In most cases
-the data attributes on an ``Artist`` are closely linked -- the *x* and *y* on a
-`~matplotlib.lines.Line2D` must be the same length -- and by storing them
-separately it is possible for them to become inconsistent in ways that noticed
-until draw time [#]_.  Further, because the data is stored as materialized
+However, this method of storing the data has several drawbacks.
+
+In most cases the data attributes on an ``Artist`` are closely linked -- the
+*x* and *y* on a `~matplotlib.lines.Line2D` must be the same length -- and by
+storing them separately it is possible for them to become inconsistent in ways
+that noticed until draw time [#]_.  With the rise of more structured data, such
+as ``pandas.DataFrame`` and ``xarray.Dataset`` users are more frequently having
+their data is coherent objects rather than individual arrays.  Currently
+Matplotlib requires that these structures be decomposed and losing the
+association between the individual arrays.
+
+An goal of this project is to bring support for draw-time resampling to every
+Matplotlib ``Artist``.  Further, because the data is stored as materialized
 ``numpy`` arrays, we must decide before draw time what the correct sampling of
-the data is.  While there are some projects like `grave <https://networkx.ors
-g/grave/>`__ that wrap richer objects or `mpl-modest-image
+the data is.  Projects like `grave <https://networkx.ors g/grave/>`__ that wrap
+richer objects or `mpl-modest-image
 <https://github.com/ChrisBeaumont/mpl-modest-image>`__, `datashader
 <https://datashader.org/getting_started/Interactivity.html#native-support-for-matplotlib>`__,
 and `mpl-scatter-density <https://github.com/astrofrog/mpl-scatter-density>`__
-that dynamically re-sample the data, these libraries have had only limited
+that dynamically re-sample the data do exist, but they have only seen limited
 adoption.
 
-The first goal of this project is to bring support for draw-time resampling to
-every Matplotlib ``Artist``.  The proposed approach is to move the data storage
-of the ``Artist`` to be indirectly via a (so-called)
-`~data_prototype.containers.DataContainer` instance rather than directly.  The
-primary method on these objects is the
-`~data_prototype.containers.DataContainer.query` method which has the signature
-::
+This is a proposal to add a level of indirection the data storage -- via a
+(so-called) `~data_prototype.containers.DataContainer` -- rather than directly
+as individual numpy arrays on the ``Artist`` instances.  The primary method on
+these objects is the `~data_prototype.containers.DataContainer.query` method
+which has the signature ::
 
     def query(
         self,
