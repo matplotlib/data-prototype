@@ -8,11 +8,11 @@ import numpy as np
 import pandas as pd
 
 
-class _Transform(Protocol):
+class _MatplotlibTransform(Protocol):
     def transform(self, verts):
         ...
 
-    def __sub__(self, other) -> "_Transform":
+    def __sub__(self, other) -> "_MatplotlibTransform":
         ...
 
 
@@ -35,8 +35,9 @@ class DataContainer(Protocol):
     def query(
         self,
         # TODO 3D?!!
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
+        /,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         """
         Query the data container for data.
@@ -46,7 +47,7 @@ class DataContainer(Protocol):
 
         Parameters
         ----------
-        transform : matplotlib.transform.Transform
+        coord_transform : matplotlib.transform.Transform
             Must go from axes fraction space -> data space
 
         size : 2 integers
@@ -88,7 +89,7 @@ class ArrayContainer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return dict(self._data), self._cache_key
@@ -113,7 +114,7 @@ class RandomContainer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {k: np.random.randn(*d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
@@ -166,18 +167,18 @@ class FuncContainer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         # TODO find a better way to compute the hash key, this is not sentative to
         # scale changes, only limit changes
-        data_bounds = tuple(transform.transform([[0, 0], [1, 1]]).flatten())
+        data_bounds = tuple(coord_transform.transform([[0, 0], [1, 1]]).flatten())
         hash_key = hash((data_bounds, size))
         if hash_key in self._cache:
             return self._cache[hash_key], hash_key
 
         xpix, ypix = size
-        x_data, _ = transform.transform(
+        x_data, _ = coord_transform.transform(
             np.vstack(
                 [
                     np.linspace(0, 1, int(xpix) * 2),
@@ -185,7 +186,7 @@ class FuncContainer:
                 ]
             ).T
         ).T
-        _, y_data = transform.transform(
+        _, y_data = coord_transform.transform(
             np.vstack(
                 [
                     np.zeros(int(ypix) * 2),
@@ -218,11 +219,11 @@ class HistContainer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         dmin, dmax = self._full_range
-        xmin, ymin, xmax, ymax = transform.transform([[0, 0], [1, 1]]).flatten()
+        xmin, ymin, xmax, ymax = coord_transform.transform([[0, 0], [1, 1]]).flatten()
 
         xmin, xmax = np.clip([xmin, xmax], dmin, dmax)
         hash_key = hash((xmin, xmax))
@@ -266,7 +267,7 @@ class SeriesContainer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {self._index_name: self._data.index.values, self._col_name: self._data.values}, self._hash_key
@@ -305,7 +306,7 @@ class DataFrameContainer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         ret = {}
@@ -328,10 +329,10 @@ class ReNamer:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        base, cache_key = self._data.query(transform, size)
+        base, cache_key = self._data.query(coord_transform, size)
         return {v: base[k] for k, v in self._mapping.items()}, cache_key
 
     def describe(self):
@@ -346,13 +347,13 @@ class DataUnion:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         cache_keys = []
         ret = {}
         for data in self._datas:
-            base, cache_key = data.query(transform, size)
+            base, cache_key = data.query(coord_transform, size)
             ret.update(base)
             cache_keys.append(cache_key)
         return ret, hash(tuple(cache_keys))
@@ -364,7 +365,7 @@ class DataUnion:
 class WebServiceContainer:
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def hit_some_database():

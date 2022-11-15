@@ -21,7 +21,7 @@ from matplotlib.colors import Normalize
 import numpy as np
 
 from data_prototype.wrappers import ImageWrapper
-from data_prototype.containers import _Transform
+from data_prototype.containers import _MatplotlibTransform, Desc
 
 from skimage.transform import downscale_local_mean
 
@@ -45,10 +45,10 @@ class Subsample:
 
     def query(
         self,
-        transform: _Transform,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        (x1, y1), (x2, y2) = transform.transform([[0, 0], [1, 1]])
+        (x1, y1), (x2, y2) = coord_transform.transform([[0, 0], [1, 1]])
 
         xi1 = np.argmin(np.abs(x - x1))
         yi1 = np.argmin(np.abs(y - y1))

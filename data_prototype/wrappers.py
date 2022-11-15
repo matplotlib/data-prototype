@@ -14,7 +14,7 @@ from matplotlib.text import Text as _Text
 from matplotlib.collections import LineCollection as _LineCollection
 from matplotlib.artist import Artist as _Artist
 
-from data_prototype.containers import DataContainer, _Transform
+from data_prototype.containers import DataContainer, _MatplotlibTransform
 
 
 class _BBox(Protocol):
@@ -30,8 +30,8 @@ class _Axes(Protocol):
     xaxis: _Axis
     yaxis: _Axis
 
-    transData: _Transform
-    transAxes: _Transform
+    transData: _MatplotlibTransform
+    transAxes: _MatplotlibTransform
 
     def get_xlim(self) -> Tuple[float, float]:
         ...
