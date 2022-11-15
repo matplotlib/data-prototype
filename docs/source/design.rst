@@ -2,8 +2,10 @@
  Design
 ========
 
-When a Matplotlib :obj:`~matplotlib.artist.Artist` object in rendered via the `~matplotlib.artist.Artist.draw` method the following
-steps happen (in spirit but maybe not exactly in code):
+
+When a Matplotlib :obj:`~matplotlib.artist.Artist` object in rendered via the
+`~matplotlib.artist.Artist.draw` method the following steps happen (in spirit
+but maybe not exactly in code):
 
 1. get the data
 2. convert from unit-full to unit-less data
@@ -29,22 +31,23 @@ steps happen (in spirit but maybe not exactly in code):
    target.
 
 However, this clear structure is frequently elided and obscured in the
-Matplotlib code base: Step 3 is only present for *x* and *y* like data (encoded
-in the `~matplotlib.transforms.TransformNode` objects) and color mapped data
-(implemented in the `.matplotlib.colors.ScalarMappable` family of classes); the
-application of Step 2 is inconsistent (both in actual application and when it
-is applied) between artists; each ``Artist`` stores it's data in its own way
-(typically as numpy arrays).
+Matplotlib code base: Step 3 is only present for *x* and *y* like data
+(encapsulated in the `~matplotlib.transforms.TransformNode` objects) and color
+mapped data (encapsulated in the `.matplotlib.colors.ScalarMappable` family of
+classes); the application of Step 2 is inconsistent (both in actual application
+and when it is applied) between artists; each ``Artist`` stores its data in
+its own way (typically as numpy arrays).
 
 With this view, we can understand the `~matplotlib.artist.Artist.draw` methods
-to be very extensively `curried
-<https://en.wikipedia.org/wiki/Currying>`__ version of
-these function chains where the objects allow us to modify the arguments to the
-functions.
+to be very extensively `curried <https://en.wikipedia.org/wiki/Currying>`__
+version of these function chains where the objects allow us to modify the
+arguments to the functions and the re-run them.
 
-The goal of this work is to bring this structure more the foreground in the internal of
-Matplotlib to make it easier to reason about, easier to extend, and easier to inject
-custom logic at each of the steps
+The goal of this work is to bring this structure more to the foreground in the
+internal structure of Matplotlib.  By exposing this inherent structure
+uniformity in the architecture of Matplotlib the library will be easier to
+reason about and easier to extend by injecting custom logic at each of
+the steps
 
 A paper with the formal mathematical description of these ideas is in
 preparation.
@@ -55,55 +58,66 @@ Data pipeline
 Get the data (Step 1)
 ---------------------
 
-Currently, almost all ``Artist`` class store the data associated with them as
-attributes on the instances as `numpy.array` objectss.  On one hand, this can
-be very useful as historically data was frequently already in `numpy.array`
-objects and, if you know the right methods for *this* ``Artist`` you can access
-that state to update or query it.  From a certain point of view, this is
-consistent with the scheme laid out above as ``self.x[:]`` is really
-``self.x.__getitem__(slice())`` which is (technically) a function call.
+In this context "data" is post any data-to-data transformations or
+aggregations.  There is already extensive tooling and literature around that
+aspect.  By completely decoupling the aggregations pipeline from the
+visualization process we are able to both simplify and generalize the problem.
 
-However, this has several drawbacks.  In most cases the data attributes on an
-``Artist`` are closely linked -- the *x* and *y* on a
+Currently, almost all ``Artist`` classes store the data they are representing
+as attributes on the instances as realized `numpy.array` [#]_ objects.  On one
+hand, this can be very useful as historically data was frequently already in
+`numpy.array` objects in the users' namespace.  If you know the right methods
+for *this* ``Artist``, you can query or update the data without recreating the
+Artist.  This is technically consistent with the scheme laid out above if we
+understand ``self.x[:]`` as ``self.x.__getitem__(slice())`` which is a function
+call.
+
+However, this method of storing the data has several drawbacks.  In most cases
+the data attributes on an ``Artist`` are closely linked -- the *x* and *y* on a
 `~matplotlib.lines.Line2D` must be the same length -- and by storing them
-separately it is possible that they will get out of sync in problematic ways.
-Further, because the data is stored as materialized ``numpy`` arrays, there we
-must decide before draw time what the correct sampling of the data is.  While
-there are some projects like `grave <https://networkx.org/grave/>`__ that wrap
-richer objects or `mpl-modest-image
+separately it is possible for them to become inconsistent in ways that noticed
+until draw time [#]_.  Further, because the data is stored as materialized
+``numpy`` arrays, we must decide before draw time what the correct sampling of
+the data is.  While there are some projects like `grave <https://networkx.ors
+g/grave/>`__ that wrap richer objects or `mpl-modest-image
 <https://github.com/ChrisBeaumont/mpl-modest-image>`__, `datashader
 <https://datashader.org/getting_started/Interactivity.html#native-support-for-matplotlib>`__,
 and `mpl-scatter-density <https://github.com/astrofrog/mpl-scatter-density>`__
-that dynamically re-sample the data these are niche libraries.
+that dynamically re-sample the data, these libraries have had only limited
+adoption.
 
-The first goal of this project is to bring support for draw-time resampleing to
-every Matplotlib ``Artist`` out of the box.  The current approach is to move
-all of the data storage off of the ``Artist`` directly and into a (so-called)
-`~data_prototype.containers.DataContainer` instance.  The primary method on these objects
-is the `~data_prototype.containers.DataContainer.query` method which has the signature ::
+The first goal of this project is to bring support for draw-time resampling to
+every Matplotlib ``Artist``.  The proposed approach is to move the data storage
+of the ``Artist`` to be indirectly via a (so-called)
+`~data_prototype.containers.DataContainer` instance rather than directly.  The
+primary method on these objects is the
+`~data_prototype.containers.DataContainer.query` method which has the signature
+::
 
     def query(
         self,
-        transform: _Transform,
+        /,
+        coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
 
 The query is passed in:
 
-- A transform from "Axes" to "data" (using Matplotlib's names for the `various
-  coordinate systems
-  <https://matplotlib.org/stable/tutorials/advanced/transforms_tutorial.html>`__
-- A notion of how big the axes is in "pixels" to provide guidance on what the correct number
-  of samples to return is.
+- A *coord_transform* from "Axes fraction" to "data" (using Matplotlib's names
+  for the `coordinate systems
+  <https://matplotlib.org/stable/tutorials/advanced/transforms_tutorial.html>`__)
+- A notion of how big the axes is in "pixels" to provide guidance on what the
+  correct number of samples to return is.  For raster outputs this is literal
+  pixels but for vector backends it will have to be an effective resolution.
 
 It will return:
 
-- A mapping of strings to things that is coercible (with the help of the
+- A mapping of strings to things that are coercible (with the help of the
   functions is steps 2 and 3) to a numpy array or types understandable by the
   backends.
 - A key that can be used for caching
 
-This function will be called at draw time by the ``Aritist`` to get the data to
+This function will be called at draw time by the ``Artist`` to get the data to
 be drawn.  In the simplest cases
 (e.g. `~data_prototype.containers.ArrayContainer` and
 `~data_prototype.containers.DataFrameContainer`) the ``query`` method ignores
@@ -124,7 +138,7 @@ visualization.  This also opens up several interesting possibilities:
 
 By accessing all of the data that is needed in draw in a single function call
 the ``DataContainer`` instances can ensure that the data is coherent and
-consistent.  This is important for applications like steaming where different
+consistent.  This is important for applications like streaming where different
 parts of the data may be arriving at different rates and it would thus be the
 ``DataContainer``'s responsibility to settle any race conditions and always
 return aligned data to the ``Artist``.
@@ -132,7 +146,7 @@ return aligned data to the ``Artist``.
 
 There is still some ambiguity as to what should be put in the data.  For
 example with `~matplotlib.lines.Line2D` it is clear that the *x* and *y* data
-should be pulled from the ``DataConatiner``, but things like *color* and
+should be pulled from the ``DataContiner``, but things like *color* and
 *linewidth* are ambiguous.  A later section will make the case that it should be
 possible, but maybe not required, that these values be accessible in the data
 context.
@@ -224,7 +238,7 @@ returns a cache key that it generates to the caller.  The exact details of how
 to generate that key are left to the ``DataContainer`` implementation, but if
 the returned data changed, then the cache key must change.  The cache key
 should be computed from a combination of the ``DataContainers`` internal state,
-the transform and size passed in.
+the coordinate transformation and size passed in.
 
 The choice to return the data and cache key in one step, rather than be a two
 step process is drive by simplicity and because the cache key is computed
@@ -239,3 +253,9 @@ management at the ``Artist`` layer.  We also need to determine how many cache
 layers to keep. Currently only the results of Step 3 are cached, but we may
 want to additionally cache intermediate results after Step 2.  The caching from
 Step 1 is likely best left to the ``DataContainer`` instances.
+
+.. [#] Not strictly true, in some cases we also store the values in the data in
+       the container it came in with which may not be a `numpy.array`.
+.. [#] For example `matplotlib.lines.Line2D.set_xdata` and
+       `matplotlib.lines.Line2D.set_ydata` do not check the lengths of the
+       input at call time.
