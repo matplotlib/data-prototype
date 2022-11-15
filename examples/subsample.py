@@ -21,7 +21,7 @@ from matplotlib.colors import Normalize
 import numpy as np
 
 from data_prototype.wrappers import ImageWrapper
-from data_prototype.containers import _Transform
+from data_prototype.containers import _Transform, Desc
 
 from skimage.transform import downscale_local_mean
 
