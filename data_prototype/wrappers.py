@@ -146,7 +146,7 @@ class ProxyWrapperBase:
                 data[x_like] = ax.xaxis.convert_units(data[x_like])
         for y_like in yunits:
             if y_like in data:
-                data[y_like] = ax.xaxis.convert_units(data[y_like])
+                data[y_like] = ax.yaxis.convert_units(data[y_like])
 
         # Step 3
         # doing the nu work here is nice because we can write it once, but we
