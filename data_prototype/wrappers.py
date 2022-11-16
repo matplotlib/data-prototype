@@ -224,6 +224,7 @@ class LineWrapper(ProxyWrapper):
 
 class PathCollectionWrapper(ProxyWrapper):
     _wrapped_class = _PathCollection
+    required_keys = {"x", "y", "paths", "facecolors", "edgecolors", "sizes"}
     _privtized_methods = (
         "set_facecolors",
         "set_edgecolors",
@@ -250,7 +251,6 @@ class PathCollectionWrapper(ProxyWrapper):
         return self._wrapped_instance.draw(renderer)
 
     def _update_wrapped(self, data):
-        print(data)
         self._wrapped_instance.set_offsets(np.array([data["x"], data["y"]]).T)
         self._wrapped_instance.set_paths(data["paths"])
         self._wrapped_instance.set_facecolors(data["facecolors"])

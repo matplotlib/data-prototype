@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import _Transform, Desc
+from data_prototype.containers import _MatplotlibTransform, Desc
 
 from data_prototype.wrappers import PathCollectionWrapper, FormatedText
 
@@ -41,7 +41,7 @@ class Lissajous:
 
     def query(
         self,
-        transform: _Transform,
+        transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def next_time():
@@ -72,7 +72,7 @@ sot_c = Lissajous()
 
 fc = FormatedText(
     sot_c,
-    "ϕ={phase:.2f}  ".format,
+    {"text": lambda phase: f"ϕ={phase:.2f}  "},
     x=1,
     y=1,
     ha="right",
