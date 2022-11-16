@@ -11,7 +11,8 @@ from matplotlib.lines import Line2D as _Line2D
 from matplotlib.image import AxesImage as _AxesImage
 from matplotlib.patches import StepPatch as _StepPatch
 from matplotlib.text import Text as _Text
-from matplotlib.collections import LineCollection as _LineCollection
+import matplotlib.transforms as mtransforms
+from matplotlib.collections import LineCollection as _LineCollection, PathCollection as _PathCollection
 from matplotlib.artist import Artist as _Artist
 
 from data_prototype.containers import DataContainer, _MatplotlibTransform
@@ -206,7 +207,7 @@ class LineWrapper(ProxyWrapper):
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
         super().__init__(data, nus)
-        self._wrapped_instance = self._wrapped_class([], [], **kwargs)
+        self._wrapped_instance = self._wrapped_class(np.array([]), np.array([]), **kwargs)
 
     @_stale_wrapper
     def draw(self, renderer):
@@ -219,6 +220,42 @@ class LineWrapper(ProxyWrapper):
         for k, v in data.items():
             k = {"x": "xdata", "y": "ydata"}.get(k, k)
             getattr(self._wrapped_instance, f"set_{k}")(v)
+
+
+class PathCollectionWrapper(ProxyWrapper):
+    _wrapped_class = _PathCollection
+    required_keys = {"x", "y", "paths", "facecolors", "edgecolors", "sizes"}
+    _privtized_methods = (
+        "set_facecolors",
+        "set_edgecolors",
+        "set_offsets",
+        "set_sizes",
+        "set_paths",
+        "get_facecolors",
+        "get_edgecolors",
+        "get_offsets",
+        "get_sizes",
+        "get_paths",
+    )
+
+    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
+        super().__init__(data, nus)
+        self._wrapped_instance = self._wrapped_class([], **kwargs)
+        self._wrapped_instance.set_transform(mtransforms.IdentityTransform())
+
+    @_stale_wrapper
+    def draw(self, renderer):
+        self._update_wrapped(
+            self._query_and_transform(renderer, xunits=["x"], yunits=["y"]),
+        )
+        return self._wrapped_instance.draw(renderer)
+
+    def _update_wrapped(self, data):
+        self._wrapped_instance.set_offsets(np.array([data["x"], data["y"]]).T)
+        self._wrapped_instance.set_paths(data["paths"])
+        self._wrapped_instance.set_facecolors(data["facecolors"])
+        self._wrapped_instance.set_edgecolors(data["edgecolors"])
+        self._wrapped_instance.set_sizes(data["sizes"])
 
 
 class ImageWrapper(ProxyWrapper):
