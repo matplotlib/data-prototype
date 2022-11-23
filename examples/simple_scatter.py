@@ -2,6 +2,8 @@
 ==================================================
 An simple scatter plot using PathCollectionWrapper
 ==================================================
+
+A quick example using ``containers.ArrayContainer`` and ``wrappers.PathCollectionWrapper``.
 """
 import numpy as np
 
