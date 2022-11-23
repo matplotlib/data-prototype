@@ -1,11 +1,9 @@
 """
-==========================
-An animated lissajous ball
-==========================
+==================================================
+An simple scatter plot using PathCollectionWrapper
+==================================================
 
-Inspired by https://twitter.com/_brohrer_/status/1584681864648065027
-
-
+A quick example using ``containers.ArrayContainer`` and ``wrappers.PathCollectionWrapper``.
 """
 import numpy as np
 
@@ -15,11 +13,6 @@ import matplotlib.markers as mmarkers
 from data_prototype.containers import ArrayContainer
 
 from data_prototype.wrappers import PathCollectionWrapper
-
-
-def update(frame, art):
-    return art
-
 
 marker_obj = mmarkers.MarkerStyle("o")
 
@@ -37,7 +30,4 @@ ax.set_xlim(-0.5, 2.5)
 ax.set_ylim(0, 5)
 lw = PathCollectionWrapper(cont, offset_transform=ax.transData)
 ax.add_artist(lw)
-# ax.set_xticks([])
-# ax.set_yticks([])
-# ax.set_aspect(1)
 plt.show()
