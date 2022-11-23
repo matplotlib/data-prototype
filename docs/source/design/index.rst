@@ -3,6 +3,10 @@
 ========
 
 
+Introduction
+============
+
+
 When a Matplotlib :obj:`~matplotlib.artist.Artist` object in rendered via the
 `~matplotlib.artist.Artist.draw` method the following steps happen (in spirit
 but maybe not exactly in code):
@@ -12,41 +16,49 @@ but maybe not exactly in code):
 3. convert the unit-less data from user-space to rendering-space
 4. call the backend rendering functions
 
-..
-   If we were to call these steps :math:`f_1` through :math:`f_4` this can be expressed as (taking
-   great liberties with the mathematical notation):
+If we were to call these steps :math:`f_1` through :math:`f_4` this can be expressed as (taking
+great liberties with the mathematical notation):
 
-   .. math::
+.. math::
 
-      R = f_4(f_3(f_2(f_1())))
+   R = f_4(f_3(f_2(f_1())))
 
-   or if you prefer
+or if you prefer
 
-   .. math::
+.. math::
 
-      R  = (f_4 \circ f_3 \circ f_2 \circ f_1)()
+   R  = (f_4 \circ f_3 \circ f_2 \circ f_1)()
 
-   It is reasonable that if we can do this for one ``Artist``, we can build up
-   more complex visualizations by rendering multiple ``Artist`` to the same
-   target.
+If we can do this for one ``Artist``, we can build up more complex
+visualizations via composition by rendering multiple ``Artist`` to the
+same target.
 
-However, this clear structure is frequently elided and obscured in the
-Matplotlib code base: Step 3 is only present for *x* and *y* like data
-(encapsulated in the `~matplotlib.transforms.TransformNode` objects) and color
-mapped data (encapsulated in the `.matplotlib.colors.ScalarMappable` family of
-classes); the application of Step 2 is inconsistent (both in actual application
-and when it is applied) between artists; each ``Artist`` stores its data in
-its own way (typically as numpy arrays).
+We can understand the :obj:`~matplotlib.artist.Artist.draw` methods to be
+extensively `curried <https://en.wikipedia.org/wiki/Currying>`__ version of
+these function chains.  By wrapping the functions in objects we can modify the
+bound arguments to the functions.  However, the clear structure is frequently
+elided or obscured in the Matplotlib code base and there is an artificial
+distinction between "data" and "style" inputs.
 
-With this view, we can understand the `~matplotlib.artist.Artist.draw` methods
-to be very extensively `curried <https://en.wikipedia.org/wiki/Currying>`__
-version of these function chains where the objects allow us to modify the
-arguments to the functions and the re-run them.
+For example mapping from "user data" to "rendering data" (Step 3) is only done
+at draw-time for *x* / *y* like data (encapsulated in the
+`~matplotlib.transforms.TransformNode` objects) and color mapped data
+(encapsulated in the `~matplotlib.cm.ScalarMappable` family of classes).
+If users need to do any other mapping between their data and Matplotlib's
+rendering space, it must be done in user code and the results passed into
+Matplotlib.  The application of unit conversion (Step 2) is inconsistent (both
+in actual application and when it is applied) between artists.  This is a
+particular difficulty for ``Artists`` parameterized by deltas (e.g. *height*
+and *width* for a Rectangle) where the order of unit conversion and computing
+the absolute bounding box can be fraught.  Finally, each ``Artist`` stores its
+data in its own way (typically as materialized numpy arrays) which makes it
+difficult to update artists in a uniform way.
+
 
 The goal of this work is to bring this structure more to the foreground in the
 internal structure of Matplotlib.  By exposing this inherent structure in the
 architecture of Matplotlib the library will be easier to reason about and
-easier to extend by injecting custom logic at each of the steps.
+easier to extend.
 
 A paper with the formal mathematical description of these ideas is in
 preparation.
@@ -57,11 +69,12 @@ Data pipeline
 Get the data (Step 1)
 ---------------------
 
-In this context "data" is post any data-to-data transformations or aggregation
-steps.  There is already extensive tooling and literature around that aspect
-which we do not need to recreate.  By completely decoupling the aggregations
-pipeline from the visualization process we are able to both simplify and
-generalize the software.
+.. note ::
+
+  In this context "data" is post any data-to-data transformation or aggregation
+  steps.  Because this proposal holds a function, rather than materialized
+  arrays, we can defer actually executing the data pipeline until draw time,
+  but Matplotlib does not need an visibility into what this pipeline is.
 
 Currently, almost all ``Artist`` classes store the data they are representing
 as attributes on the instances as realized `numpy.array` [#]_ objects.  On one
@@ -72,33 +85,29 @@ for *this* ``Artist``, you can query or update the data without recreating the
 we understand ``self.x[:]`` as ``self.x.__getitem__(slice())`` which is the
 function call in step 1.
 
-However, this method of storing the data has several drawbacks.
-
-In most cases the data attributes on an ``Artist`` are closely linked -- the
-*x* and *y* on a `~matplotlib.lines.Line2D` must be the same length -- and by
-storing them separately it is possible for them to become inconsistent in ways
-that noticed until draw time [#]_.  With the rise of more structured data, such
-as ``pandas.DataFrame`` and ``xarray.Dataset`` users are more frequently having
-their data is coherent objects rather than individual arrays.  Currently
+However, this method of storing the data has several drawbacks.  In most cases
+the data attributes on an ``Artist`` are closely linked -- the *x* and *y* on a
+`~matplotlib.lines.Line2D` must be the same length -- and by storing them
+separately it is possible for them to become inconsistent in ways that noticed
+until draw time [#]_.  With the rise of more structured data types, such as
+`pandas.DataFrame` and `xarray.core.dataset.Dataset`, users are likely to have
+their data in coherent objects rather than as individual arrays.  Currently
 Matplotlib requires that these structures be decomposed and losing the
-association between the individual arrays.
-
-An goal of this project is to bring support for draw-time resampling to every
-Matplotlib ``Artist``.  Further, because the data is stored as materialized
-``numpy`` arrays, we must decide before draw time what the correct sampling of
-the data is.  Projects like `grave <https://networkx.ors g/grave/>`__ that wrap
-richer objects or `mpl-modest-image
+association between the individual arrays.  Further, because the data is stored
+as materialized ``numpy`` arrays, we must decide before draw time what the
+correct sampling of the data is.  Projects like `grave <https://networkx.ors
+g/grave/>`__ that wrap richer objects or `mpl-modest-image
 <https://github.com/ChrisBeaumont/mpl-modest-image>`__, `datashader
 <https://datashader.org/getting_started/Interactivity.html#native-support-for-matplotlib>`__,
 and `mpl-scatter-density <https://github.com/astrofrog/mpl-scatter-density>`__
 that dynamically re-sample the data do exist, but they have only seen limited
 adoption.
 
-This is a proposal to add a level of indirection the data storage -- via a
-(so-called) `~data_prototype.containers.DataContainer` -- rather than directly
-as individual numpy arrays on the ``Artist`` instances.  The primary method on
-these objects is the `~data_prototype.containers.DataContainer.query` method
-which has the signature ::
+The first structural change of this proposal is to add a layer of indirection
+-- via a (so-called) `~data_prototype.containers.DataContainer` -- to the data
+storage and access.  The primary method on these objects is the
+`~data_prototype.containers.DataContainer.query` method with the signature
+::
 
     def query(
         self,
@@ -107,7 +116,7 @@ which has the signature ::
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
 
-The query is passed in:
+The query is passed:
 
 - A *coord_transform* from "Axes fraction" to "data" (using Matplotlib's names
   for the `coordinate systems
@@ -119,9 +128,9 @@ The query is passed in:
 It will return:
 
 - A mapping of strings to things that are coercible (with the help of the
-  functions is steps 2 and 3) to a numpy array or types understandable by the
+  functions in Steps 2 and 3) to a numpy array or types understandable by the
   backends.
-- A key that can be used for caching
+- A key that can be used for caching by the caller
 
 This function will be called at draw time by the ``Artist`` to get the data to
 be drawn.  In the simplest cases
@@ -153,9 +162,8 @@ return aligned data to the ``Artist``.
 There is still some ambiguity as to what should be put in the data.  For
 example with `~matplotlib.lines.Line2D` it is clear that the *x* and *y* data
 should be pulled from the ``DataContiner``, but things like *color* and
-*linewidth* are ambiguous.  A later section will make the case that it should be
-possible, but maybe not required, that these values be accessible in the data
-context.
+*linewidth* are ambiguous.  It should be possible, but maybe not required, that
+these values be derived from the data returned by the ``DataContainer``.
 
 An additional task that the ``DataContainer`` can do is to describe the type,
 shape, fields, and topology of the data it contains.  For example a
@@ -170,6 +178,7 @@ all of this still needs to be developed.  There is a
 `~data_prototype.containers.DataContainer.describe` method, however it is the
 most provisional part of the current design.
 
+This does not address how the ``DataContainer`` objects are generated in practice.
 
 Unit conversion (Step 2)
 ------------------------
@@ -209,7 +218,7 @@ values), representation conversions (like named colors to RGB values), mapping
 stings to a set of objects (like named markershape), to paraaterized type
 conversion (like colormapping).  Although Matplotlib is currently doing all of
 these conversions, the user really only has control of the position and
-colormapping (on `~matplotlib.colors.ScalarMappable` sub-classes).  The next
+colormapping (on `~matplotlib.cm.ScalarMappable` sub-classes).  The next
 thing that this design allows is for user defined functions to be passed for
 any of the relevant data fields.
 
@@ -237,14 +246,14 @@ Caching
 A key to keeping this implementation efficient is to be able to cache when we
 have to re-compute values.  Internally current Matplotlib has a number of
 ad-hoc caches, such as in ``ScalarMappable`` and ``Line2D``.  Going down the
-route of hashing all of the data is not a sustainable path (in the case even
-modestly sized data the time to hash the data will quickly out-strip any
-possible time savings doing the cache lookup!).  The proposed ``query`` method
-returns a cache key that it generates to the caller.  The exact details of how
-to generate that key are left to the ``DataContainer`` implementation, but if
-the returned data changed, then the cache key must change.  The cache key
-should be computed from a combination of the ``DataContainers`` internal state,
-the coordinate transformation and size passed in.
+route of hashing all of the data is not a sustainable path (even with modestly
+sized data the time to hash the data will quickly out-strip any possible time
+savings doing the cache lookup!).  The proposed ``query`` method returns a
+cache key that it generates to the caller.  The exact details of how to
+generate that key are left to the ``DataContainer`` implementation, but if the
+returned data changed, then the cache key must change.  The cache key should be
+computed from a combination of the ``DataContainers`` internal state and the arguments
+passed to ``query``.
 
 The choice to return the data and cache key in one step, rather than be a two
 step process is drive by simplicity and because the cache key is computed
@@ -259,6 +268,17 @@ management at the ``Artist`` layer.  We also need to determine how many cache
 layers to keep. Currently only the results of Step 3 are cached, but we may
 want to additionally cache intermediate results after Step 2.  The caching from
 Step 1 is likely best left to the ``DataContainer`` instances.
+
+Detailed design notes
+=====================
+
+
+.. toctree::
+   :maxdepth: 2
+
+   containers
+
+
 
 .. [#] Not strictly true, in some cases we also store the values in the data in
        the container it came in with which may not be a `numpy.array`.

@@ -17,7 +17,7 @@ Design
 .. toctree::
    :maxdepth: 2
 
-   design.rst
+   design/index
 
 
 Examples
