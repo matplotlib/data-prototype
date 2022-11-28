@@ -165,15 +165,19 @@ class FuncContainer:
         self._xyfuncs = _split(xyfuncs) if xyfuncs is not None else {}
         self._cache: MutableMapping[Union[str, int], Any] = LFUCache(64)
 
+    def _query_hash(self, coord_transform, size):
+        # TODO find a better way to compute the hash key, this is not sentative to
+        # scale changes, only limit changes
+        data_bounds = tuple(coord_transform.transform([[0, 0], [1, 1]]).flatten())
+        hash_key = hash((data_bounds, size))
+        return hash_key
+
     def query(
         self,
         coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        # TODO find a better way to compute the hash key, this is not sentative to
-        # scale changes, only limit changes
-        data_bounds = tuple(coord_transform.transform([[0, 0], [1, 1]]).flatten())
-        hash_key = hash((data_bounds, size))
+        hash_key = self._query_hash(coord_transform, size)
         if hash_key in self._cache:
             return self._cache[hash_key], hash_key
 
