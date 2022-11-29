@@ -3,6 +3,10 @@
 Simple patch artists
 ====================
 
+Draw two fully specified rectangle patches.
+Demonstrates :class:`.patches.RectangleWrapper` using
+:class:`.containers.ArrayContainer`.
+
 """
 import numpy as np
 

@@ -3,7 +3,8 @@
 A re-binning histogram
 ======================
 
-
+A :class:`.containers.HistContainer` which is used with :class:`.wrappers.StepWrapper`
+to provide a histogram which recomputes the bins based on a range selected.
 """
 
 import matplotlib.pyplot as plt

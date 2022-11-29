@@ -3,7 +3,8 @@
 A functional line
 =================
 
-The hello-world
+Demonstrating the differences between :class:`.containers.FuncContainer` and
+:class:`.containers.SeriesContainer` using :class:`.wrappers.LineWrapper`.
 """
 
 import matplotlib.pyplot as plt

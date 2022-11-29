@@ -3,7 +3,8 @@
 A functional 2D image
 =====================
 
-
+A 2D image generated using :class:`.containers.FuncContainer` and
+:class:`wrappers.ImageWrapper`.
 """
 
 import matplotlib.pyplot as plt

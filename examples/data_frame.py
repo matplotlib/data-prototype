@@ -1,9 +1,10 @@
 """
-=================
+===============
 Show data frame
-=================
+===============
 
-The hello-world
+Wrapping a :class:`pandas.DataFrame` using :class:`.containers.DataFrameContainer`
+and :class:`.wrappers.LineWrapper`.
 """
 
 import matplotlib.pyplot as plt

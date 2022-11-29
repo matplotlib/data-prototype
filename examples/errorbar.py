@@ -1,9 +1,10 @@
 """
-=================
-Show data frame
-=================
+==============
+Errorbar graph
+==============
 
-The hello-world
+Using :class:`.containers.ArrayContainer` and :class:`.wrappers.ErrorbarWrapper`
+to plot a graph with error bars.
 """
 
 import matplotlib.pyplot as plt

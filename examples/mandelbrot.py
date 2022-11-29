@@ -3,6 +3,10 @@
 (Infinitly) Zoomable Mandelbrot Set
 ===================================
 
+A mandelbrot set which is computed using a :class:`.containers.FuncContainer`
+and represented using a :class:`wrappers.ImageWrapper`.
+
+The mandelbrot recomputes as it is zoomed in and/or panned.
 
 """
 

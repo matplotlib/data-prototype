@@ -3,7 +3,8 @@
 An simple scatter plot using PathCollectionWrapper
 ==================================================
 
-A quick example using ``containers.ArrayContainer`` and ``wrappers.PathCollectionWrapper``.
+A quick scatter plot using :class:`.containers.ArrayContainer` and
+:class:`.wrappers.PathCollectionWrapper`.
 """
 import numpy as np
 
