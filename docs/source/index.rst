@@ -18,8 +18,8 @@ Examples
 .. toctree::
    :maxdepth: 2
 
-   api/index.rst
    gallery/index.rst
+   api/index.rst
 
 Backmatter
 ----------
