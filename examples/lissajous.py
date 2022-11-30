@@ -5,6 +5,7 @@ An animated lissajous ball
 
 Inspired by https://twitter.com/_brohrer_/status/1584681864648065027
 
+An animated scatter plot using a custom container and :class:`.wrappers.PathCollectionWrapper`
 
 """
 import time
@@ -19,7 +20,7 @@ from matplotlib.animation import FuncAnimation
 
 from data_prototype.containers import _MatplotlibTransform, Desc
 
-from data_prototype.wrappers import PathCollectionWrapper, FormatedText
+from data_prototype.wrappers import PathCollectionWrapper
 
 
 class Lissajous:
@@ -31,7 +32,6 @@ class Lissajous:
         return {
             "x": Desc([self.N], float),
             "y": Desc([self.N], float),
-            "phase": Desc([], float),
             "time": Desc([], float),
             "sizes": Desc([], float),
             "paths": Desc([], float),
@@ -53,7 +53,6 @@ class Lissajous:
             return {
                 "x": np.cos(5 * phase),
                 "y": np.sin(3 * phase),
-                "phase": phase[0],
                 "sizes": np.array([256]),
                 "paths": [marker_obj.get_path().transformed(marker_obj.get_transform())],
                 "edgecolors": "k",
@@ -70,27 +69,19 @@ def update(frame, art):
 
 sot_c = Lissajous()
 
-fc = FormatedText(
-    sot_c,
-    {"text": lambda phase: f"ϕ={phase:.2f}  "},
-    x=1,
-    y=1,
-    ha="right",
-)
 fig, ax = plt.subplots()
 ax.set_xlim(-1.1, 1.1)
 ax.set_ylim(-1.1, 1.1)
 lw = PathCollectionWrapper(sot_c, offset_transform=ax.transData)
 ax.add_artist(lw)
-ax.add_artist(fc)
 # ax.set_xticks([])
 # ax.set_yticks([])
 ax.set_aspect(1)
 ani = FuncAnimation(
     fig,
-    partial(update, art=(lw, fc)),
-    frames=60 * 15,
-    interval=1000 / 100,
+    partial(update, art=(lw,)),
+    frames=60,
+    interval=1000 / 100 * 15,
     # TODO: blitting does not work because wrappers do not inherent from Artist
     # blit=True,
 )

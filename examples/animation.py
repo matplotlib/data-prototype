@@ -3,6 +3,8 @@
 An animated line
 ================
 
+An animated line using a custom container class,
+:class:`.wrappers.LineWrapper`, and :class:`.wrappers.FormatedText`.
 
 """
 import time

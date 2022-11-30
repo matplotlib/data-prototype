@@ -18,3 +18,8 @@ Wrappers
 
 .. automodule:: data_prototype.wrappers
    :members:
+   :undoc-members:
+
+.. automodule:: data_prototype.patches
+   :members:
+   :undoc-members:

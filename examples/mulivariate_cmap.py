@@ -1,9 +1,11 @@
 """
-=====================
-A functional 2D image
-=====================
+=========================
+Custom bivariate colormap
+=========================
 
 
+Using ``nu`` functions to account for two values when computing the color
+of each pixel.
 """
 
 import matplotlib.pyplot as plt
