@@ -4,7 +4,6 @@ import inspect
 import numpy as np
 
 from cachetools import LFUCache
-from collections.abc import Sequence
 from functools import partial, wraps
 
 import matplotlib as mpl
@@ -48,6 +47,7 @@ class _Axes(Protocol):
 class _Aritst(Protocol):
     axes: _Axes
 
+
 def _make_param_name(k, func):
     def wrapped(**kwargs):
         (arg,) = kwargs.values()
@@ -56,8 +56,10 @@ def _make_param_name(k, func):
     wrapped.__signature__ = inspect.Signature([inspect.Parameter(k, inspect.Parameter.POSITIONAL_OR_KEYWORD)])
     return wrapped
 
+
 def _make_identity(k):
     return _make_param_name(k, lambda x: x)
+
 
 def _forwarder(forwards, cls=None):
     if cls is None:
@@ -246,7 +248,7 @@ class PathCollectionWrapper(ProxyWrapper):
     )
 
     def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus, xunits = ("x",), yunits = ("y",))
+        super().__init__(data, nus, xunits=("x",), yunits=("y",))
         self._wrapped_instance = self._wrapped_class([], **kwargs)
         self._wrapped_instance.set_transform(mtransforms.IdentityTransform())
 
