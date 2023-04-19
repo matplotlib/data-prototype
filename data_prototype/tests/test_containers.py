@@ -14,7 +14,6 @@ def ac():
 
 
 def _verify_describe(container):
-
     data, cache_key = container.query(IdentityTransform(), [100, 100])
     desc = container.describe()
 
