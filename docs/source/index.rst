@@ -12,6 +12,14 @@ repository should be considered experimental and used at you own risk.
 
 Source : https://github.com/matplotlib/data-prototype
 
+Design
+------
+.. toctree::
+   :maxdepth: 2
+
+   design/index
+
+
 Examples
 --------
 
@@ -19,6 +27,14 @@ Examples
    :maxdepth: 2
 
    gallery/index.rst
+
+Reference
+---------
+
+
+.. toctree::
+   :maxdepth: 2
+
    api/index.rst
 
 Backmatter
