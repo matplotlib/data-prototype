@@ -44,8 +44,8 @@ class PatchWrapper(ProxyWrapper):
         "joinstyle",
     }
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+    def __init__(self, data: DataContainer, converters=None, /, **kwargs):
+        super().__init__(data, converters)
         self._wrapped_instance = self._wrapped_class([0, 0], 0, 0, **kwargs)
 
     @_stale_wrapper

@@ -3,7 +3,7 @@
 Mapping Line Properties
 =======================
 
-Leveraging the nu functions to transform users space data to visualization data.
+Leveraging the converter functions to transform users space data to visualization data.
 
 """
 
@@ -20,7 +20,7 @@ cmap.set_over("k")
 cmap.set_under("r")
 norm = Normalize(1, 8)
 
-line_nus = {
+line_converter = {
     # arbitrary functions
     "lw": lambda lw: min(1 + lw, 5),
     # standard color mapping
@@ -29,7 +29,7 @@ line_nus = {
     "ls": lambda cat: {"A": "-", "B": ":", "C": "--"}[cat[()]],
 }
 
-text_nus = {
+text_converter = {
     "text": lambda j, cat: f"index={j[()]} class={cat[()]!r}",
     "y": lambda j: j,
 }
@@ -53,13 +53,13 @@ for j in range(10):
     ax.add_artist(
         LineWrapper(
             ac,
-            line_nus,
+            line_converter,
         )
     )
     ax.add_artist(
         FormatedText(
             ac,
-            text_nus,
+            text_converter,
             x=2 * np.pi,
             ha="right",
             bbox={"facecolor": "gray", "alpha": 0.5},
