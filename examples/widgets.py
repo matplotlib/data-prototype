@@ -15,6 +15,7 @@ from matplotlib.widgets import Slider, Button
 
 from data_prototype.wrappers import LineWrapper
 from data_prototype.containers import FuncContainer
+from data_prototype.conversion_node import FunctionConversionNode
 
 
 class SliderContainer(FuncContainer):
@@ -117,7 +118,7 @@ fc = SliderContainer(
 lw = LineWrapper(
     fc,
     # color map phase (scaled to 2pi and wrapped to [0, 1])
-    {"color": lambda color: cmap((color / (2 * np.pi)) % 1)},
+    FunctionConversionNode.from_funcs("cmap", {"color": lambda color: cmap((color / (2 * np.pi)) % 1)}),
     lw=5,
 )
 ax.add_artist(lw)

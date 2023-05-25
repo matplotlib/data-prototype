@@ -27,7 +27,7 @@ fc = FuncContainer(
 )
 cmap = mpl.colormaps["viridis"]
 norm = Normalize(-1, 1)
-im = ImageWrapper(fc, {"image": lambda image: cmap(norm(image))})
+im = ImageWrapper(fc)
 
 fig, ax = plt.subplots()
 ax.add_artist(im)

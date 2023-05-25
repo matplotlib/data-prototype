@@ -14,25 +14,33 @@ from matplotlib.colors import Normalize
 
 from data_prototype.wrappers import LineWrapper, FormatedText
 from data_prototype.containers import ArrayContainer
+from data_prototype.conversion_node import FunctionConversionNode
 
 cmap = plt.colormaps["viridis"]
 cmap.set_over("k")
 cmap.set_under("r")
 norm = Normalize(1, 8)
 
-line_converter = {
-    # arbitrary functions
-    "lw": lambda lw: min(1 + lw, 5),
-    # standard color mapping
-    "color": lambda j: cmap(norm(j)),
-    # categorical
-    "ls": lambda cat: {"A": "-", "B": ":", "C": "--"}[cat[()]],
-}
+line_converter = FunctionConversionNode.from_funcs(
+    "line converter",
+    {
+        # arbitrary functions
+        "lw": lambda lw: min(1 + lw, 5),
+        # standard color mapping
+        "color": lambda j: cmap(norm(j)),
+        # categorical
+        "ls": lambda cat: {"A": "-", "B": ":", "C": "--"}[cat[()]],
+    },
+)
 
-text_converter = {
-    "text": lambda j, cat: f"index={j[()]} class={cat[()]!r}",
-    "y": lambda j: j,
-}
+text_converter = FunctionConversionNode.from_funcs(
+    "text converter",
+    {
+        "text": lambda j, cat: f"index={j[()]} class={cat[()]!r}",
+        "y": lambda j: j,
+        "x": lambda x: 2 * np.pi,
+    },
+)
 
 
 th = np.linspace(0, 2 * np.pi, 128)

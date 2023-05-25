@@ -95,3 +95,15 @@ class FunctionConversionNode(ConversionNode):
                 **{k: func(**{p: input[p] for p in sig.parameters}) for (k, (func, sig)) in self._sigs.items()},
             }
         )
+
+
+@dataclass
+class LimitKeysConversionNode(ConversionNode):
+    keys: set[str]
+
+    @classmethod
+    def from_keys(cls, name: str, keys: Sequence[str]):
+        return cls(name, (), tuple(keys), trim_keys=True, keys=set(keys))
+
+    def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
+        return {k: v for k, v in input.items() if k in self.keys}

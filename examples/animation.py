@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 from data_prototype.containers import _MatplotlibTransform, Desc
+from data_prototype.conversion_node import FunctionConversionNode
 
 from data_prototype.wrappers import LineWrapper, FormatedText
 
@@ -63,9 +64,9 @@ sot_c = SinOfTime()
 lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
 fc = FormatedText(
     sot_c,
-    {"text": lambda phase: f"ϕ={phase:.2f}"},
-    x=2 * np.pi,
-    y=1,
+    FunctionConversionNode.from_funcs(
+        "fmt", {"text": lambda phase: f"ϕ={phase:.2f}", "x": lambda: 2 * np.pi, "y": lambda: 1}
+    ),
     ha="right",
 )
 fig, ax = plt.subplots()
