@@ -163,7 +163,7 @@ class ProxyWrapperBase:
         setters = list(self.expected_keys | self.required_keys)
         if hasattr(self, "_wrapped_class"):
             setters += [f[4:] for f in dir(self._wrapped_class) if f.startswith("set_")]
-        self._converters.append(LimitKeysConversionNode.from_keys("setters", setters))
+        self._converters.append(LimitKeysConversionNode.from_keys(setters))
         self.stale = True
 
 
@@ -196,9 +196,9 @@ class LineWrapper(ProxyWrapper):
     def __init__(self, data: DataContainer, converters=None, /, **kwargs):
         super().__init__(data, converters)
         self._wrapped_instance = self._wrapped_class(np.array([]), np.array([]), **kwargs)
-        self._converters.insert(-1, RenameConversionNode.from_mapping("xydata", {"x": "xdata", "y": "ydata"}))
+        self._converters.insert(-1, RenameConversionNode.from_mapping({"x": "xdata", "y": "ydata"}))
         setters = [f[4:] for f in dir(self._wrapped_class) if f.startswith("set_")]
-        self._converters[-1] = LimitKeysConversionNode.from_keys("setters", setters)
+        self._converters[-1] = LimitKeysConversionNode.from_keys(setters)
 
     @_stale_wrapper
     def draw(self, renderer):
@@ -261,9 +261,7 @@ class ImageWrapper(ProxyWrapper):
                 cmap = mpl.colormaps["viridis"]
             if norm is None:
                 raise ValueError("not sure how to do autoscaling yet")
-            converters.append(
-                FunctionConversionNode.from_funcs("map colors", {"image": lambda image: cmap(norm(image))})
-            )
+            converters.append(FunctionConversionNode.from_funcs({"image": lambda image: cmap(norm(image))}))
         super().__init__(data, converters)
         kwargs.setdefault("origin", "lower")
         self._wrapped_instance = self._wrapped_class(None, **kwargs)

@@ -118,7 +118,7 @@ fc = SliderContainer(
 lw = LineWrapper(
     fc,
     # color map phase (scaled to 2pi and wrapped to [0, 1])
-    FunctionConversionNode.from_funcs("cmap", {"color": lambda color: cmap((color / (2 * np.pi)) % 1)}),
+    FunctionConversionNode.from_funcs({"color": lambda color: cmap((color / (2 * np.pi)) % 1)}),
     lw=5,
 )
 ax.add_artist(lw)

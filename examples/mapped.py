@@ -22,7 +22,6 @@ cmap.set_under("r")
 norm = Normalize(1, 8)
 
 line_converter = FunctionConversionNode.from_funcs(
-    "line converter",
     {
         # arbitrary functions
         "lw": lambda lw: min(1 + lw, 5),
@@ -34,7 +33,6 @@ line_converter = FunctionConversionNode.from_funcs(
 )
 
 text_converter = FunctionConversionNode.from_funcs(
-    "text converter",
     {
         "text": lambda j, cat: f"index={j[()]} class={cat[()]!r}",
         "y": lambda j: j,

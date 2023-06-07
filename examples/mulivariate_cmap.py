@@ -41,7 +41,7 @@ fc = FuncContainer(
     },
 )
 
-im = ImageWrapper(fc, FunctionConversionNode.from_funcs("bivariate", {"image": image_nu}))
+im = ImageWrapper(fc, FunctionConversionNode.from_funcs({"image": image_nu}))
 
 fig, ax = plt.subplots()
 ax.add_artist(im)

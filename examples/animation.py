@@ -65,7 +65,7 @@ lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
 fc = FormatedText(
     sot_c,
     FunctionConversionNode.from_funcs(
-        "fmt", {"text": lambda phase: f"ϕ={phase:.2f}", "x": lambda: 2 * np.pi, "y": lambda: 1}
+        {"text": lambda phase: f"ϕ={phase:.2f}", "x": lambda: 2 * np.pi, "y": lambda: 1}
     ),
     ha="right",
 )
