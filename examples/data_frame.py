@@ -16,7 +16,9 @@ from data_prototype.containers import DataFrameContainer
 
 th = np.linspace(0, 4 * np.pi, 256)
 
-dc1 = DataFrameContainer(pd.DataFrame({"x": th, "y": np.cos(th)}), index_name=None, col_names=lambda n: n)
+dc1 = DataFrameContainer(
+    pd.DataFrame({"x": th, "y": np.cos(th)}), index_name=None, col_names=lambda n: n
+)
 
 df = pd.DataFrame(
     {

@@ -50,7 +50,9 @@ class UnionConversionNode(ConversionNode):
         return cls(required, tuple(output), trim_keys, nodes)
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
-        return super().evaluate({k: v for n in self.nodes for k, v in n.evaluate(input).items()})
+        return super().evaluate(
+            {k: v for n in self.nodes for k, v in n.evaluate(input).items()}
+        )
 
 
 @dataclass
@@ -66,7 +68,9 @@ class RenameConversionNode(ConversionNode):
         return cls(required, tuple(output), trim_keys, mapping)
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
-        return super().evaluate({**input, **{out: input[inp] for (inp, out) in self.mapping.items()}})
+        return super().evaluate(
+            {**input, **{out: input[inp] for (inp, out) in self.mapping.items()}}
+        )
 
 
 @dataclass
@@ -91,7 +95,10 @@ class FunctionConversionNode(ConversionNode):
         return super().evaluate(
             {
                 **input,
-                **{k: func(**{p: input[p] for p in sig.parameters}) for (k, (func, sig)) in self._sigs.items()},
+                **{
+                    k: func(**{p: input[p] for p in sig.parameters})
+                    for (k, (func, sig)) in self._sigs.items()
+                },
             }
         )
 

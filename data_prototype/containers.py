@@ -117,7 +117,9 @@ class RandomContainer:
         coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        return {k: np.random.randn(*d.shape) for k, d in self._desc.items()}, str(uuid.uuid4())
+        return {k: np.random.randn(*d.shape) for k, d in self._desc.items()}, str(
+            uuid.uuid4()
+        )
 
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)
@@ -127,9 +129,15 @@ class FuncContainer:
     def __init__(
         self,
         # TODO: is this really the best spelling?!
-        xfuncs: Optional[Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any], Any]]]] = None,
-        yfuncs: Optional[Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any], Any]]]] = None,
-        xyfuncs: Optional[Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any, Any], Any]]]] = None,
+        xfuncs: Optional[
+            Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any], Any]]]
+        ] = None,
+        yfuncs: Optional[
+            Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any], Any]]]
+        ] = None,
+        xyfuncs: Optional[
+            Dict[str, Tuple[Tuple[Union[str, int], ...], Callable[[Any, Any], Any]]]
+        ] = None,
     ):
         """
         A container that wraps several functions.  They are split into 3 categories:
@@ -274,7 +282,10 @@ class SeriesContainer:
         coord_transform: _MatplotlibTransform,
         size: Tuple[int, int],
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        return {self._index_name: self._data.index.values, self._col_name: self._data.values}, self._hash_key
+        return {
+            self._index_name: self._data.index.values,
+            self._col_name: self._data.values,
+        }, self._hash_key
 
     def describe(self) -> Dict[str, Desc]:
         return dict(self._desc)

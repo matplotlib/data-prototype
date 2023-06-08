@@ -35,7 +35,9 @@ class SliderContainer(FuncContainer):
                     s,
                     # this line binds the correct sliders to the functions
                     # and makes lambdas that match the API FuncContainer needs
-                    lambda x, keys=get_needed_keys(f), f=f: f(x, *(sliders[k].val for k in keys)),
+                    lambda x, keys=get_needed_keys(f), f=f: f(
+                        x, *(sliders[k].val for k in keys)
+                    ),
                 )
                 for k, (s, f) in xfuncs.items()
             },
@@ -104,7 +106,8 @@ fc = SliderContainer(
         "y": (
             ("N",),
             # the y data needs all three sliders
-            lambda t, amplitude, frequency, phase: amplitude * np.sin(2 * np.pi * frequency * t + phase),
+            lambda t, amplitude, frequency, phase: amplitude
+            * np.sin(2 * np.pi * frequency * t + phase),
         ),
         # the color data has to take the x (because reasons), but just
         # needs the phase
@@ -118,7 +121,9 @@ fc = SliderContainer(
 lw = LineWrapper(
     fc,
     # color map phase (scaled to 2pi and wrapped to [0, 1])
-    FunctionConversionNode.from_funcs({"color": lambda color: cmap((color / (2 * np.pi)) % 1)}),
+    FunctionConversionNode.from_funcs(
+        {"color": lambda color: cmap((color / (2 * np.pi)) % 1)}
+    ),
     lw=5,
 )
 ax.add_artist(lw)
@@ -127,6 +132,8 @@ ax.add_artist(lw)
 # Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
 resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
 button = Button(resetax, "Reset", hovercolor="0.975")
-button.on_clicked(lambda event: [sld.reset() for sld in (freq_slider, amp_slider, phase_slider)])
+button.on_clicked(
+    lambda event: [sld.reset() for sld in (freq_slider, amp_slider, phase_slider)]
+)
 
 plt.show()

@@ -166,7 +166,11 @@ html_theme = "mpl_sphinx_theme"
 #
 html_logo = "_static/logo2.svg"
 html_theme_options = {
-    "logo": {"link": "index", "image_light": "images/logo2.svg", "image_dark": "images/logo_dark.svg"},
+    "logo": {
+        "link": "index",
+        "image_light": "images/logo2.svg",
+        "image_dark": "images/logo_dark.svg",
+    },
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -214,7 +218,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "data_prototype.tex", "data_prototype Documentation", "Contributors", "manual"),
+    (
+        master_doc,
+        "data_prototype.tex",
+        "data_prototype Documentation",
+        "Contributors",
+        "manual",
+    ),
 ]
 
 
@@ -222,7 +232,9 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "data_prototype", "data_prototype Documentation", [author], 1)]
+man_pages = [
+    (master_doc, "data_prototype", "data_prototype Documentation", [author], 1)
+]
 
 
 # -- Options for Texinfo output -------------------------------------------

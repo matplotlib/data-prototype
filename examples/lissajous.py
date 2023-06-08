@@ -46,7 +46,9 @@ class Lissajous:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def next_time():
             cur_time = time.time()
-            cur_time = np.array([cur_time, cur_time - 0.1, cur_time - 0.2, cur_time - 0.3])
+            cur_time = np.array(
+                [cur_time, cur_time - 0.1, cur_time - 0.2, cur_time - 0.3]
+            )
 
             phase = 15 * np.pi * (self.scale * cur_time % 60) / 150
             marker_obj = mmarkers.MarkerStyle("o")
@@ -54,7 +56,9 @@ class Lissajous:
                 "x": np.cos(5 * phase),
                 "y": np.sin(3 * phase),
                 "sizes": np.array([256]),
-                "paths": [marker_obj.get_path().transformed(marker_obj.get_transform())],
+                "paths": [
+                    marker_obj.get_path().transformed(marker_obj.get_transform())
+                ],
                 "edgecolors": "k",
                 "facecolors": ["#4682b4ff", "#82b446aa", "#46b48288", "#8246b433"],
                 "time": cur_time[0],
