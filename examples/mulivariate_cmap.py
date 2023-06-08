@@ -13,6 +13,7 @@ import numpy as np
 
 from data_prototype.wrappers import ImageWrapper
 from data_prototype.containers import FuncContainer
+from data_prototype.conversion_node import FunctionConversionNode
 
 from matplotlib.colors import hsv_to_rgb
 
@@ -40,7 +41,7 @@ fc = FuncContainer(
     },
 )
 
-im = ImageWrapper(fc, {"image": image_nu})
+im = ImageWrapper(fc, FunctionConversionNode.from_funcs({"image": image_nu}))
 
 fig, ax = plt.subplots()
 ax.add_artist(im)

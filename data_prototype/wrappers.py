@@ -16,6 +16,13 @@ from matplotlib.collections import LineCollection as _LineCollection, PathCollec
 from matplotlib.artist import Artist as _Artist
 
 from data_prototype.containers import DataContainer, _MatplotlibTransform
+from data_prototype.conversion_node import (
+    ConversionNode,
+    RenameConversionNode,
+    evaluate_pipeline,
+    FunctionConversionNode,
+    LimitKeysConversionNode,
+)
 
 
 class _BBox(Protocol):
@@ -139,44 +146,25 @@ class ProxyWrapperBase:
             return self._cache[cache_key]
         except KeyError:
             ...
-        # TODO decide if units go pre-nu or post-nu?
-        for x_like in xunits:
-            if x_like in data:
-                data[x_like] = ax.xaxis.convert_units(data[x_like])
-        for y_like in yunits:
-            if y_like in data:
-                data[y_like] = ax.xaxis.convert_units(data[y_like])
-
-        # doing the nu work here is nice because we can write it once, but we
-        # really want to push this computation down a layer
-        # TODO sort out how this interoperates with the transform stack
-        transformed_data = {}
-        for k, (nu, sig) in self._sigs.items():
-            to_pass = set(sig.parameters)
-            transformed_data[k] = nu(**{k: data[k] for k in to_pass})
+        # TODO units
+        transformed_data = evaluate_pipeline(self._converters, data)
 
         self._cache[cache_key] = transformed_data
         return transformed_data
 
-    def __init__(self, data, nus, **kwargs):
+    def __init__(self, data, converters: ConversionNode | list[ConversionNode] | None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self._cache = LFUCache(64)
         # TODO make sure mutating this will invalidate the cache!
-        self._nus = nus or {}
-        for k in self.required_keys:
-            self._nus.setdefault(k, _make_identity(k))
-        desc = data.describe()
-        for k in self.expected_keys:
-            if k in desc:
-                self._nus.setdefault(k, _make_identity(k))
-        self._sigs = {k: (nu, inspect.signature(nu)) for k, nu in self._nus.items()}
+        if isinstance(converters, ConversionNode):
+            converters = [converters]
+        self._converters: list[ConversionNode] = converters or []
+        setters = list(self.expected_keys | self.required_keys)
+        if hasattr(self, "_wrapped_class"):
+            setters += [f[4:] for f in dir(self._wrapped_class) if f.startswith("set_")]
+        self._converters.append(LimitKeysConversionNode.from_keys(setters))
         self.stale = True
-
-    # TODO add a setter
-    @property
-    def nus(self):
-        return dict(self._nus)
 
 
 class ProxyWrapper(ProxyWrapperBase):
@@ -192,7 +180,7 @@ class ProxyWrapper(ProxyWrapperBase):
         return getattr(self._wrapped_instance, key)
 
     def __setattr__(self, key, value):
-        if key in ("_wrapped_instance", "data", "_cache", "_nus", "stale", "_sigs"):
+        if key in ("_wrapped_instance", "data", "_cache", "_converters", "stale", "_sigs"):
             super().__setattr__(key, value)
         elif hasattr(self, "_wrapped_instance") and hasattr(self._wrapped_instance, key):
             setattr(self._wrapped_instance, key, value)
@@ -205,9 +193,12 @@ class LineWrapper(ProxyWrapper):
     _privtized_methods = ("set_xdata", "set_ydata", "set_data", "get_xdata", "get_ydata", "get_data")
     required_keys = {"x", "y"}
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+    def __init__(self, data: DataContainer, converters=None, /, **kwargs):
+        super().__init__(data, converters)
         self._wrapped_instance = self._wrapped_class(np.array([]), np.array([]), **kwargs)
+        self._converters.insert(-1, RenameConversionNode.from_mapping({"x": "xdata", "y": "ydata"}))
+        setters = [f[4:] for f in dir(self._wrapped_class) if f.startswith("set_")]
+        self._converters[-1] = LimitKeysConversionNode.from_keys(setters)
 
     @_stale_wrapper
     def draw(self, renderer):
@@ -218,7 +209,6 @@ class LineWrapper(ProxyWrapper):
 
     def _update_wrapped(self, data):
         for k, v in data.items():
-            k = {"x": "xdata", "y": "ydata"}.get(k, k)
             getattr(self._wrapped_instance, f"set_{k}")(v)
 
 
@@ -238,8 +228,8 @@ class PathCollectionWrapper(ProxyWrapper):
         "get_paths",
     )
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+    def __init__(self, data: DataContainer, converters=None, /, **kwargs):
+        super().__init__(data, converters)
         self._wrapped_instance = self._wrapped_class([], **kwargs)
         self._wrapped_instance.set_transform(mtransforms.IdentityTransform())
 
@@ -262,17 +252,17 @@ class ImageWrapper(ProxyWrapper):
     _wrapped_class = _AxesImage
     required_keys = {"xextent", "yextent", "image"}
 
-    def __init__(self, data: DataContainer, nus=None, /, cmap=None, norm=None, **kwargs):
-        nus = dict(nus or {})
+    def __init__(self, data: DataContainer, converters=None, /, cmap=None, norm=None, **kwargs):
+        converters = converters or []
         if cmap is not None or norm is not None:
-            if nus is not None and "image" in nus:
+            if converters is not None and "image" in converters:
                 raise ValueError("Conflicting input")
             if cmap is None:
                 cmap = mpl.colormaps["viridis"]
             if norm is None:
                 raise ValueError("not sure how to do autoscaling yet")
-            nus["image"] = lambda image: cmap(norm(image))
-        super().__init__(data, nus)
+            converters.append(FunctionConversionNode.from_funcs({"image": lambda image: cmap(norm(image))}))
+        super().__init__(data, converters)
         kwargs.setdefault("origin", "lower")
         self._wrapped_instance = self._wrapped_class(None, **kwargs)
 
@@ -293,8 +283,8 @@ class StepWrapper(ProxyWrapper):
     _privtized_methods = ()  # ("set_data", "get_data")
     required_keys = {"edges", "density"}
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+    def __init__(self, data: DataContainer, converters=None, /, **kwargs):
+        super().__init__(data, converters)
         self._wrapped_instance = self._wrapped_class([], [1], **kwargs)
 
     @_stale_wrapper
@@ -312,8 +302,8 @@ class FormatedText(ProxyWrapper):
     _wrapped_class = _Text
     _privtized_methods = ("set_text",)
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+    def __init__(self, data: DataContainer, converters=None, /, **kwargs):
+        super().__init__(data, converters)
         self._wrapped_instance = self._wrapped_class(text="", **kwargs)
 
     @_stale_wrapper
@@ -368,8 +358,8 @@ class ErrorbarWrapper(MultiProxyWrapper):
     required_keys = {"x", "y"}
     expected_keys = {f"{axis}{dirc}" for axis in ["x", "y"] for dirc in ["upper", "lower"]}
 
-    def __init__(self, data: DataContainer, nus=None, /, **kwargs):
-        super().__init__(data, nus)
+    def __init__(self, data: DataContainer, converters=None, /, **kwargs):
+        super().__init__(data, converters)
         # TODO all of the kwarg teasing apart that is needed
         color = kwargs.pop("color", "k")
         lw = kwargs.pop("lw", 2)

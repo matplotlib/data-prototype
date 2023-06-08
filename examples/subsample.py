@@ -68,7 +68,7 @@ class Subsample:
 sub = Subsample()
 cmap = mpl.colormaps["coolwarm"]
 norm = Normalize(-2.2, 2.2)
-im = ImageWrapper(sub, {"image": lambda image: cmap(norm(image))})
+im = ImageWrapper(sub, cmap=cmap, norm=norm)
 
 fig, ax = plt.subplots()
 ax.add_artist(im)

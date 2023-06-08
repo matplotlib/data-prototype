@@ -13,7 +13,6 @@ import numpy as np
 from data_prototype.wrappers import ImageWrapper
 from data_prototype.containers import FuncContainer
 
-import matplotlib as mpl
 from matplotlib.colors import Normalize
 
 
@@ -25,9 +24,8 @@ fc = FuncContainer(
         "image": (("N", "M"), lambda x, y: np.sin(x).reshape(1, -1) * np.cos(y).reshape(-1, 1)),
     },
 )
-cmap = mpl.colormaps["viridis"]
-norm = Normalize(-1, 1)
-im = ImageWrapper(fc, {"image": lambda image: cmap(norm(image))})
+norm = Normalize(vmin=-1, vmax=1)
+im = ImageWrapper(fc, norm=norm)
 
 fig, ax = plt.subplots()
 ax.add_artist(im)
