@@ -12,7 +12,10 @@ from matplotlib.image import AxesImage as _AxesImage
 from matplotlib.patches import StepPatch as _StepPatch
 from matplotlib.text import Text as _Text
 import matplotlib.transforms as mtransforms
-from matplotlib.collections import LineCollection as _LineCollection, PathCollection as _PathCollection
+from matplotlib.collections import (
+    LineCollection as _LineCollection,
+    PathCollection as _PathCollection,
+)
 from matplotlib.artist import Artist as _Artist
 
 from data_prototype.containers import DataContainer, _MatplotlibTransform
@@ -60,7 +63,9 @@ def _make_identity(k):
         (_,) = kwargs.values()
         return _
 
-    identity.__signature__ = inspect.Signature([inspect.Parameter(k, inspect.Parameter.POSITIONAL_OR_KEYWORD)])
+    identity.__signature__ = inspect.Signature(
+        [inspect.Parameter(k, inspect.Parameter.POSITIONAL_OR_KEYWORD)]
+    )
     return identity
 
 
@@ -116,7 +121,9 @@ class ProxyWrapperBase:
     def _update_wrapped(self, data):
         raise NotImplementedError
 
-    def _query_and_transform(self, renderer, *, xunits: List[str], yunits: List[str]) -> Dict[str, Any]:
+    def _query_and_transform(
+        self, renderer, *, xunits: List[str], yunits: List[str]
+    ) -> Dict[str, Any]:
         """
         Helper to centralize the data querying and python-side transforms
 
@@ -152,7 +159,9 @@ class ProxyWrapperBase:
         self._cache[cache_key] = transformed_data
         return transformed_data
 
-    def __init__(self, data, converters: ConversionNode | list[ConversionNode] | None, **kwargs):
+    def __init__(
+        self, data, converters: ConversionNode | list[ConversionNode] | None, **kwargs
+    ):
         super().__init__(**kwargs)
         self.data = data
         self._cache = LFUCache(64)
@@ -180,9 +189,18 @@ class ProxyWrapper(ProxyWrapperBase):
         return getattr(self._wrapped_instance, key)
 
     def __setattr__(self, key, value):
-        if key in ("_wrapped_instance", "data", "_cache", "_converters", "stale", "_sigs"):
+        if key in (
+            "_wrapped_instance",
+            "data",
+            "_cache",
+            "_converters",
+            "stale",
+            "_sigs",
+        ):
             super().__setattr__(key, value)
-        elif hasattr(self, "_wrapped_instance") and hasattr(self._wrapped_instance, key):
+        elif hasattr(self, "_wrapped_instance") and hasattr(
+            self._wrapped_instance, key
+        ):
             setattr(self._wrapped_instance, key, value)
         else:
             super().__setattr__(key, value)
@@ -190,13 +208,24 @@ class ProxyWrapper(ProxyWrapperBase):
 
 class LineWrapper(ProxyWrapper):
     _wrapped_class = _Line2D
-    _privtized_methods = ("set_xdata", "set_ydata", "set_data", "get_xdata", "get_ydata", "get_data")
+    _privtized_methods = (
+        "set_xdata",
+        "set_ydata",
+        "set_data",
+        "get_xdata",
+        "get_ydata",
+        "get_data",
+    )
     required_keys = {"x", "y"}
 
     def __init__(self, data: DataContainer, converters=None, /, **kwargs):
         super().__init__(data, converters)
-        self._wrapped_instance = self._wrapped_class(np.array([]), np.array([]), **kwargs)
-        self._converters.insert(-1, RenameConversionNode.from_mapping({"x": "xdata", "y": "ydata"}))
+        self._wrapped_instance = self._wrapped_class(
+            np.array([]), np.array([]), **kwargs
+        )
+        self._converters.insert(
+            -1, RenameConversionNode.from_mapping({"x": "xdata", "y": "ydata"})
+        )
         setters = [f[4:] for f in dir(self._wrapped_class) if f.startswith("set_")]
         self._converters[-1] = LimitKeysConversionNode.from_keys(setters)
 
@@ -252,7 +281,9 @@ class ImageWrapper(ProxyWrapper):
     _wrapped_class = _AxesImage
     required_keys = {"xextent", "yextent", "image"}
 
-    def __init__(self, data: DataContainer, converters=None, /, cmap=None, norm=None, **kwargs):
+    def __init__(
+        self, data: DataContainer, converters=None, /, cmap=None, norm=None, **kwargs
+    ):
         converters = converters or []
         if cmap is not None or norm is not None:
             if converters is not None and "image" in converters:
@@ -261,7 +292,11 @@ class ImageWrapper(ProxyWrapper):
                 cmap = mpl.colormaps["viridis"]
             if norm is None:
                 raise ValueError("not sure how to do autoscaling yet")
-            converters.append(FunctionConversionNode.from_funcs({"image": lambda image: cmap(norm(image))}))
+            converters.append(
+                FunctionConversionNode.from_funcs(
+                    {"image": lambda image: cmap(norm(image))}
+                )
+            )
         super().__init__(data, converters)
         kwargs.setdefault("origin", "lower")
         self._wrapped_instance = self._wrapped_class(None, **kwargs)
@@ -341,7 +376,9 @@ class MultiProxyWrapper(ProxyWrapperBase, _Artist):
             super().__setattr__(key, value)
         if hasattr(self, "_wrapped_instances"):
             # We can end up with out wrapped instance as part of init
-            children_have_attrs = [hasattr(c, key) for c in self._wrapped_instances.values()]
+            children_have_attrs = [
+                hasattr(c, key) for c in self._wrapped_instances.values()
+            ]
             if any(children_have_attrs):
                 if not all(children_have_attrs):
                     raise Exception("mixed attributes 😱")
@@ -356,7 +393,9 @@ class MultiProxyWrapper(ProxyWrapperBase, _Artist):
 
 class ErrorbarWrapper(MultiProxyWrapper):
     required_keys = {"x", "y"}
-    expected_keys = {f"{axis}{dirc}" for axis in ["x", "y"] for dirc in ["upper", "lower"]}
+    expected_keys = {
+        f"{axis}{dirc}" for axis in ["x", "y"] for dirc in ["upper", "lower"]
+    }
 
     def __init__(self, data: DataContainer, converters=None, /, **kwargs):
         super().__init__(data, converters)
@@ -387,7 +426,9 @@ class ErrorbarWrapper(MultiProxyWrapper):
     def draw(self, renderer):
         self._update_wrapped(
             self._query_and_transform(
-                renderer, xunits=["x", "xupper", "xlower"], yunits=["y", "yupper", "ylower"]
+                renderer,
+                xunits=["x", "xupper", "xlower"],
+                yunits=["y", "yupper", "ylower"],
             ),
         )
         for k, v in self._wrapped_instances.items():

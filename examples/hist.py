@@ -13,7 +13,9 @@ import numpy as np
 from data_prototype.wrappers import StepWrapper
 from data_prototype.containers import HistContainer
 
-hc = HistContainer(np.concatenate([np.random.randn(5000), 0.1 * np.random.randn(500) + 5]), 25)
+hc = HistContainer(
+    np.concatenate([np.random.randn(5000), 0.1 * np.random.randn(500) + 5]), 25
+)
 
 
 fig, (ax1, ax2) = plt.subplots(1, 2, layout="constrained")

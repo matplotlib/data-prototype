@@ -10,7 +10,9 @@ from .. import containers
 
 @pytest.fixture
 def ac():
-    return containers.ArrayContainer(a=np.arange(5), b=np.arange(42, dtype=float).reshape(6, 7))
+    return containers.ArrayContainer(
+        a=np.arange(5), b=np.arange(42, dtype=float).reshape(6, 7)
+    )
 
 
 def _verify_describe(container):

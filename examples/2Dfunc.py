@@ -21,7 +21,10 @@ fc = FuncContainer(
     xyfuncs={
         "xextent": ((2,), lambda x, y: [x[0], x[-1]]),
         "yextent": ((2,), lambda x, y: [y[0], y[-1]]),
-        "image": (("N", "M"), lambda x, y: np.sin(x).reshape(1, -1) * np.cos(y).reshape(-1, 1)),
+        "image": (
+            ("N", "M"),
+            lambda x, y: np.sin(x).reshape(1, -1) * np.cos(y).reshape(-1, 1),
+        ),
     },
 )
 norm = Normalize(vmin=-1, vmax=1)

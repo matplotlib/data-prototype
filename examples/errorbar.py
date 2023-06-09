@@ -21,7 +21,9 @@ ylower = y - np.sqrt(y)
 xupper = x + 0.5
 xlower = x - 0.5
 
-ac = ArrayContainer(x=x, y=y, yupper=yupper, ylower=ylower, xlower=xlower, xupper=xupper)
+ac = ArrayContainer(
+    x=x, y=y, yupper=yupper, ylower=ylower, xlower=xlower, xupper=xupper
+)
 
 
 fig, ax = plt.subplots()

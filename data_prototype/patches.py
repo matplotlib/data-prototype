@@ -50,7 +50,11 @@ class PatchWrapper(ProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        self._update_wrapped(self._query_and_transform(renderer, xunits=self._xunits, yunits=self._yunits))
+        self._update_wrapped(
+            self._query_and_transform(
+                renderer, xunits=self._xunits, yunits=self._yunits
+            )
+        )
         return self._wrapped_instance.draw(renderer)
 
     def _update_wrapped(self, data):
@@ -75,7 +79,14 @@ class RectangleWrapper(PatchWrapper):
     )
     _xunits = ("x", "width")
     _yunits = ("y", "height")
-    required_keys = PatchWrapper.required_keys | {"x", "y", "width", "height", "angle", "rotation_point"}
+    required_keys = PatchWrapper.required_keys | {
+        "x",
+        "y",
+        "width",
+        "height",
+        "angle",
+        "rotation_point",
+    }
 
     def _update_wrapped(self, data):
         for k, v in data.items():
