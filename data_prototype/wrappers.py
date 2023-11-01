@@ -265,7 +265,7 @@ class PathCollectionWrapper(ProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(renderer, xunits=["x"], yunits=["y"]),
+            self._query_and_transform(renderer, xunits=[], yunits=[]),
         )
         return self._wrapped_instance.draw(renderer)
 

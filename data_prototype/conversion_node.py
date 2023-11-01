@@ -6,11 +6,17 @@ from dataclasses import dataclass
 import inspect
 from functools import cached_property
 
+from matplotlib.axis import Axis
+
 from typing import Any
 
 
 def evaluate_pipeline(nodes: Sequence[ConversionNode], input: dict[str, Any]):
     for node in nodes:
+        if isinstance(node, Callable):
+            k = list(inspect.signature(node).parameters.keys())[0]
+            node = FunctionConversionNode.from_funcs({k: node})
+
         input = node.evaluate(input)
     return input
 
@@ -113,3 +119,20 @@ class LimitKeysConversionNode(ConversionNode):
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         return {k: v for k, v in input.items() if k in self.keys}
+
+
+@dataclass
+class MatplotlibUnitConversion(ConversionNode):
+    axis: Axis
+
+    @classmethod
+    def from_keys(cls, keys: Sequence[str], axis: Axis):
+        return cls(tuple(keys), tuple(keys), trim_keys=False, axis=axis)
+
+    def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
+        return super().evaluate(
+            {
+                **input,
+                **{k: self.axis.convert_units(input[k]) for k in self.required_keys},
+            }
+        )
