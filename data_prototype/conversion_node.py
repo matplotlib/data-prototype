@@ -6,18 +6,22 @@ from dataclasses import dataclass
 import inspect
 from functools import cached_property
 
-from matplotlib.axis import Axis
-
 from typing import Any
 
 
-def evaluate_pipeline(nodes: Sequence[ConversionNode], input: dict[str, Any]):
+def evaluate_pipeline(
+    nodes: Sequence[ConversionNode],
+    input: dict[str, Any],
+    delayed_converters: dict[str, Callable] | None = None,
+):
     for node in nodes:
         if isinstance(node, Callable):
             k = list(inspect.signature(node).parameters.keys())[0]
             node = FunctionConversionNode.from_funcs({k: node})
-
-        input = node.evaluate(input)
+        if isinstance(node, DelayedConversionNode):
+            input = node.evaluate(input, delayed_converters)
+        else:
+            input = node.evaluate(input)
     return input
 
 
@@ -122,17 +126,24 @@ class LimitKeysConversionNode(ConversionNode):
 
 
 @dataclass
-class MatplotlibUnitConversion(ConversionNode):
-    axis: Axis
+class DelayedConversionNode(ConversionNode):
+    converter_key: str
 
     @classmethod
-    def from_keys(cls, keys: Sequence[str], axis: Axis):
-        return cls(tuple(keys), tuple(keys), trim_keys=False, axis=axis)
+    def from_keys(cls, keys: Sequence[str], converter_key: str):
+        return cls(
+            tuple(keys), tuple(keys), trim_keys=False, converter_key=converter_key
+        )
 
-    def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
+    def evaluate(
+        self, input: dict[str, Any], converters: dict[str, Callable] | None = None
+    ) -> dict[str, Any]:
         return super().evaluate(
             {
                 **input,
-                **{k: self.axis.convert_units(input[k]) for k in self.required_keys},
+                **{
+                    k: converters[self.converter_key](input[k])
+                    for k in self.required_keys
+                },
             }
         )

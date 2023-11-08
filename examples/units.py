@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 
 from data_prototype.containers import ArrayContainer
-from data_prototype.conversion_node import MatplotlibUnitConversion
+from data_prototype.conversion_node import DelayedConversionNode
 
 from data_prototype.wrappers import PathCollectionWrapper
 
@@ -35,8 +35,10 @@ cont = ArrayContainer(
 fig, ax = plt.subplots()
 ax.set_xlim(-0.5, 7)
 ax.set_ylim(0, 5)
-conv = MatplotlibUnitConversion.from_keys(("x",), axis=ax.xaxis)
-lw = PathCollectionWrapper(cont, [conv], offset_transform=ax.transData)
+xconv = DelayedConversionNode.from_keys(("x",), converter_key="xunits")
+yconv = DelayedConversionNode.from_keys(("y",), converter_key="yunits")
+lw = PathCollectionWrapper(cont, [xconv, yconv], offset_transform=ax.transData)
 ax.add_artist(lw)
 ax.xaxis.set_units(ureg.feet)
+ax.yaxis.set_units(ureg.m)
 plt.show()

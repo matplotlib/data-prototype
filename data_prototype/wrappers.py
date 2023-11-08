@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Protocol, Tuple, get_type_hints
+from typing import Dict, Any, Protocol, Tuple, get_type_hints
 import inspect
 
 import numpy as np
@@ -121,17 +121,13 @@ class ProxyWrapperBase:
     def _update_wrapped(self, data):
         raise NotImplementedError
 
-    def _query_and_transform(
-        self, renderer, *, xunits: List[str], yunits: List[str]
-    ) -> Dict[str, Any]:
+    def _query_and_transform(self, renderer) -> Dict[str, Any]:
         """
         Helper to centralize the data querying and python-side transforms
 
         Parameters
         ----------
         renderer : RendererBase
-        xunits, yunits : List[str]
-            The list of keys that need to be run through the x and y unit machinery.
         """
         # extract what we need to about the axes to query the data
         ax = self.axes
@@ -153,8 +149,11 @@ class ProxyWrapperBase:
             return self._cache[cache_key]
         except KeyError:
             ...
-        # TODO units
-        transformed_data = evaluate_pipeline(self._converters, data)
+        delayed_conversion = {
+            "xunits": ax.xaxis.convert_units,
+            "yunits": ax.yaxis.convert_units,
+        }
+        transformed_data = evaluate_pipeline(self._converters, data, delayed_conversion)
 
         self._cache[cache_key] = transformed_data
         return transformed_data
@@ -232,7 +231,7 @@ class LineWrapper(ProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(renderer, xunits=["x"], yunits=["y"]),
+            self._query_and_transform(renderer),
         )
         return self._wrapped_instance.draw(renderer)
 
@@ -265,7 +264,7 @@ class PathCollectionWrapper(ProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(renderer, xunits=[], yunits=[]),
+            self._query_and_transform(renderer),
         )
         return self._wrapped_instance.draw(renderer)
 
@@ -304,7 +303,7 @@ class ImageWrapper(ProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(renderer, xunits=["xextent"], yunits=["yextent"]),
+            self._query_and_transform(renderer),
         )
         return self._wrapped_instance.draw(renderer)
 
@@ -325,7 +324,7 @@ class StepWrapper(ProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(renderer, xunits=["edges"], yunits=["density"]),
+            self._query_and_transform(renderer),
         )
         return self._wrapped_instance.draw(renderer)
 
@@ -344,7 +343,7 @@ class FormatedText(ProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(renderer, xunits=[], yunits=[]),
+            self._query_and_transform(renderer),
         )
         return self._wrapped_instance.draw(renderer)
 
@@ -425,11 +424,7 @@ class ErrorbarWrapper(MultiProxyWrapper):
     @_stale_wrapper
     def draw(self, renderer):
         self._update_wrapped(
-            self._query_and_transform(
-                renderer,
-                xunits=["x", "xupper", "xlower"],
-                yunits=["y", "yupper", "ylower"],
-            ),
+            self._query_and_transform(renderer),
         )
         for k, v in self._wrapped_instances.items():
             v.draw(renderer)

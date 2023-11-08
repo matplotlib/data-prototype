@@ -10,7 +10,7 @@ import matplotlib.projections as mprojections
 
 from .containers import ArrayContainer, DataUnion
 from .conversion_node import (
-    MatplotlibUnitConversion,
+    DelayedConversionNode,
     FunctionConversionNode,
     RenameConversionNode,
 )
@@ -96,8 +96,8 @@ class Axes(MPLAxes):
         cont = DataUnion(defaults, inputs)
 
         pipeline = []
-        xconvert = MatplotlibUnitConversion.from_keys(("x",), axis=self.xaxis)
-        yconvert = MatplotlibUnitConversion.from_keys(("y",), axis=self.yaxis)
+        xconvert = DelayedConversionNode.from_keys(("x",), converter_key="xunits")
+        yconvert = DelayedConversionNode.from_keys(("y",), converter_key="yunits")
         pipeline.extend([xconvert, yconvert])
         pipeline.append(lambda x: np.ma.ravel(x))
         pipeline.append(lambda y: np.ma.ravel(y))
