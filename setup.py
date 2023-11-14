@@ -6,7 +6,7 @@ import sys
 # NOTE: This file must remain Python 2 compatible for the foreseeable future,
 # to ensure that we error out properly for people with outdated setuptools
 # and/or pip.
-min_version = (3, 9)
+min_version = (3, 10)
 if sys.version_info < min_version:
     error = """
 data_prototype does not support Python {0}.{1}.
