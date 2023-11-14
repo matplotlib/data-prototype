@@ -53,16 +53,18 @@ class Desc:
             elif len(desc.shape) > len(spec):
                 return False
             for speccomp, desccomp in zip(spec[::-1], desc.shape[::-1]):
+                print(specvars)
                 if broadcast and desccomp == 1:
                     continue
                 if isinstance(speccomp, str):
                     specv, specoff = speccomp[0], int(speccomp[1:] or 0)
 
                     if isinstance(desccomp, str):
-                        descv, descoff = speccomp[0], int(speccomp[1:] or 0)
+                        descv, descoff = desccomp[0], int(desccomp[1:] or 0)
                         entry = (descv, descoff - specoff)
                     else:
                         entry = desccomp - specoff
+                    print(entry)
 
                     if specv in specvars and entry != specvars[specv]:
                         return False
