@@ -44,15 +44,36 @@ class Desc:
     units: str = "naive"
 
     @staticmethod
-    def check_shapes(*args: tuple[ShapeSpec, "Desc"], broadcast=False) -> bool:
+    def validate_shapes(
+        specification: dict[str, ShapeSpec | "Desc"],
+        actual: dict[str, ShapeSpec | "Desc"],
+        *,
+        broadcast=False,
+    ) -> bool:
         specvars: dict[str, int | tuple[str, int]] = {}
-        for spec, desc in args:
+        for fieldname in specification:
+            spec = specification[fieldname]
+            if fieldname not in actual:
+                raise KeyError(
+                    f"Actual is missing {fieldname!r}, required by specification."
+                )
+            desc = actual[fieldname]
+            if isinstance(spec, Desc):
+                spec = spec.shape
+            if isinstance(desc, Desc):
+                desc = desc.shape
             if not broadcast:
-                if len(spec) != len(desc.shape):
-                    return False
-            elif len(desc.shape) > len(spec):
-                return False
-            for speccomp, desccomp in zip(spec[::-1], desc.shape[::-1]):
+                if len(spec) != len(desc):
+                    raise ValueError(
+                        f"{fieldname!r} shape {desc} incompatible with specification "
+                        f"{spec}."
+                    )
+            elif len(desc) > len(spec):
+                raise ValueError(
+                    f"{fieldname!r} shape {desc} incompatible with specification "
+                    f"{spec}."
+                )
+            for speccomp, desccomp in zip(spec[::-1], desc[::-1]):
                 if broadcast and desccomp == 1:
                     continue
                 if isinstance(speccomp, str):
@@ -65,12 +86,15 @@ class Desc:
                         entry = desccomp - specoff
 
                     if specv in specvars and entry != specvars[specv]:
-                        return False
+                        raise ValueError(f"Found two incompatible values for {specv!r}")
 
                     specvars[specv] = entry
                 elif speccomp != desccomp:
-                    return False
-        return True
+                    raise ValueError(
+                        f"{fieldname!r} shape {desc} incompatible with specification "
+                        f"{spec}"
+                    )
+        return None
 
 
 class DataContainer(Protocol):

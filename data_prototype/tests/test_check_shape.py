@@ -30,9 +30,9 @@ from data_prototype.containers import Desc
 def test_passing_no_broadcast(
     spec: list[tuple[int | str, ...]], actual: list[tuple[int | str, ...]]
 ):
-    assert Desc.check_shapes(
-        *[(s, Desc(dtype=float, shape=a)) for s, a in zip(spec, actual)]
-    )
+    spec = {var: shape for var, shape in zip("abcdefg", spec)}
+    actual = {var: shape for var, shape in zip("abcdefg", actual)}
+    Desc.validate_shapes(spec, actual)
 
 
 @pytest.mark.parametrize(
@@ -55,9 +55,10 @@ def test_passing_no_broadcast(
 def test_failing_no_broadcast(
     spec: list[tuple[int | str, ...]], actual: list[tuple[int | str, ...]]
 ):
-    assert not Desc.check_shapes(
-        *[(s, Desc(dtype=float, shape=a)) for s, a in zip(spec, actual)]
-    )
+    spec = {var: shape for var, shape in zip("abcdefg", spec)}
+    actual = {var: shape for var, shape in zip("abcdefg", actual)}
+    with pytest.raises(ValueError):
+        Desc.validate_shapes(spec, actual)
 
 
 @pytest.mark.parametrize(
@@ -90,9 +91,9 @@ def test_failing_no_broadcast(
 def test_passing_broadcast(
     spec: list[tuple[int | str, ...]], actual: list[tuple[int | str, ...]]
 ):
-    assert Desc.check_shapes(
-        *[(s, Desc(dtype=float, shape=a)) for s, a in zip(spec, actual)], broadcast=True
-    )
+    spec = {var: shape for var, shape in zip("abcdefg", spec)}
+    actual = {var: shape for var, shape in zip("abcdefg", actual)}
+    Desc.validate_shapes(spec, actual, broadcast=True)
 
 
 @pytest.mark.parametrize(
@@ -113,6 +114,20 @@ def test_passing_broadcast(
 def test_failing_broadcast(
     spec: list[tuple[int | str, ...]], actual: list[tuple[int | str, ...]]
 ):
-    assert not Desc.check_shapes(
-        *[(s, Desc(dtype=float, shape=a)) for s, a in zip(spec, actual)], broadcast=True
-    )
+    spec = {var: shape for var, shape in zip("abcdefg", spec)}
+    actual = {var: shape for var, shape in zip("abcdefg", actual)}
+    with pytest.raises(ValueError):
+        Desc.validate_shapes(spec, actual, broadcast=True)
+
+
+def test_desc_object():
+    spec = {"a": Desc(("N",), float), "b": Desc(("N+1",), float)}
+    actual = {"a": Desc((3,), float), "b": Desc((4,), float)}
+    Desc.validate_shapes(spec, actual)
+
+
+def test_missing_key():
+    spec = {"a": Desc(("N",), float), "b": Desc(("N+1",), float)}
+    actual = {"a": Desc((3,), float)}
+    with pytest.raises(KeyError):
+        Desc.validate_shapes(spec, actual)
