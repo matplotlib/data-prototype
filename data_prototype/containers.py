@@ -1,5 +1,15 @@
 from dataclasses import dataclass
-from typing import Protocol, Dict, Tuple, Optional, Any, Union, Callable, MutableMapping
+from typing import (
+    Protocol,
+    Dict,
+    Tuple,
+    Optional,
+    Any,
+    Union,
+    Callable,
+    MutableMapping,
+    TypeAlias,
+)
 import uuid
 
 from cachetools import LFUCache
@@ -16,6 +26,9 @@ class _MatplotlibTransform(Protocol):
         ...
 
 
+ShapeSpec: TypeAlias = Tuple[Union[str, int], ...]
+
+
 @dataclass(frozen=True)
 class Desc:
     # TODO: sort out how to actually spell this.  We need to know:
@@ -24,11 +37,64 @@ class Desc:
     #   - is this a variable size depending on the query (e.g. N)
     #   - what is the relative size to the other variable values (N vs N+1)
     # We are probably going to have to implement a DSL for this (😞)
-    shape: Tuple[Union[str, int], ...]
+    shape: ShapeSpec
     # TODO: is using a string better?
     dtype: np.dtype
     # TODO: do we want to include this at this level?  "naive" means unit-unaware.
     units: str = "naive"
+
+    @staticmethod
+    def validate_shapes(
+        specification: dict[str, ShapeSpec | "Desc"],
+        actual: dict[str, ShapeSpec | "Desc"],
+        *,
+        broadcast=False,
+    ) -> bool:
+        specvars: dict[str, int | tuple[str, int]] = {}
+        for fieldname in specification:
+            spec = specification[fieldname]
+            if fieldname not in actual:
+                raise KeyError(
+                    f"Actual is missing {fieldname!r}, required by specification."
+                )
+            desc = actual[fieldname]
+            if isinstance(spec, Desc):
+                spec = spec.shape
+            if isinstance(desc, Desc):
+                desc = desc.shape
+            if not broadcast:
+                if len(spec) != len(desc):
+                    raise ValueError(
+                        f"{fieldname!r} shape {desc} incompatible with specification "
+                        f"{spec}."
+                    )
+            elif len(desc) > len(spec):
+                raise ValueError(
+                    f"{fieldname!r} shape {desc} incompatible with specification "
+                    f"{spec}."
+                )
+            for speccomp, desccomp in zip(spec[::-1], desc[::-1]):
+                if broadcast and desccomp == 1:
+                    continue
+                if isinstance(speccomp, str):
+                    specv, specoff = speccomp[0], int(speccomp[1:] or 0)
+
+                    if isinstance(desccomp, str):
+                        descv, descoff = desccomp[0], int(desccomp[1:] or 0)
+                        entry = (descv, descoff - specoff)
+                    else:
+                        entry = desccomp - specoff
+
+                    if specv in specvars and entry != specvars[specv]:
+                        raise ValueError(f"Found two incompatible values for {specv!r}")
+
+                    specvars[specv] = entry
+                elif speccomp != desccomp:
+                    raise ValueError(
+                        f"{fieldname!r} shape {desc} incompatible with specification "
+                        f"{spec}"
+                    )
+        return None
 
 
 class DataContainer(Protocol):
