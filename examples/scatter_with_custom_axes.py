@@ -1,3 +1,17 @@
+"""
+=========================================
+An simple scatter plot using `ax.scatter`
+=========================================
+
+This is a quick comparison between the current Matplotlib `scatter` and
+the version in :file:`data_prototype/axes.py`, which uses data containers
+and a conversion pipeline.
+
+This is here to show what does work and what does not work with the current
+implementation of container-based artist drawing.
+"""
+
+
 import data_prototype.axes  # side-effect registers projection # noqa
 
 import matplotlib.pyplot as plt

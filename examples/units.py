@@ -1,10 +1,9 @@
 """
-==================================================
-An simple scatter plot using PathCollectionWrapper
-==================================================
+===========================================
+Using pint units with PathCollectionWrapper
+===========================================
 
-A quick scatter plot using :class:`.containers.ArrayContainer` and
-:class:`.wrappers.PathCollectionWrapper`.
+Using third party units functionality in conjunction with Matplotlib Axes
 """
 import numpy as np
 
@@ -35,6 +34,10 @@ cont = ArrayContainer(
 fig, ax = plt.subplots()
 ax.set_xlim(-0.5, 7)
 ax.set_ylim(0, 5)
+
+# DelayedConversionNode is used to identify the keys which undergo unit transformations
+# The actual method which does conversions in this example is added by the
+# `Axis`/`Axes`, but `PathCollectionWrapper` does not natively interact with the units.
 xconv = DelayedConversionNode.from_keys(("x",), converter_key="xunits")
 yconv = DelayedConversionNode.from_keys(("y",), converter_key="yunits")
 lw = PathCollectionWrapper(cont, [xconv, yconv], offset_transform=ax.transData)
