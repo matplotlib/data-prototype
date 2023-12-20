@@ -9,9 +9,19 @@ from functools import cached_property
 from typing import Any
 
 
-def evaluate_pipeline(nodes: Sequence[ConversionNode], input: dict[str, Any]):
+def evaluate_pipeline(
+    nodes: Sequence[ConversionNode],
+    input: dict[str, Any],
+    delayed_converters: dict[str, Callable] | None = None,
+):
     for node in nodes:
-        input = node.evaluate(input)
+        if isinstance(node, Callable):
+            k = list(inspect.signature(node).parameters.keys())[0]
+            node = FunctionConversionNode.from_funcs({k: node})
+        if isinstance(node, DelayedConversionNode):
+            input = node.evaluate(input, delayed_converters)
+        else:
+            input = node.evaluate(input)
     return input
 
 
@@ -113,3 +123,27 @@ class LimitKeysConversionNode(ConversionNode):
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         return {k: v for k, v in input.items() if k in self.keys}
+
+
+@dataclass
+class DelayedConversionNode(ConversionNode):
+    converter_key: str
+
+    @classmethod
+    def from_keys(cls, keys: Sequence[str], converter_key: str):
+        return cls(
+            tuple(keys), tuple(keys), trim_keys=False, converter_key=converter_key
+        )
+
+    def evaluate(
+        self, input: dict[str, Any], converters: dict[str, Callable] | None = None
+    ) -> dict[str, Any]:
+        return super().evaluate(
+            {
+                **input,
+                **{
+                    k: converters[self.converter_key](input[k])
+                    for k in self.required_keys
+                },
+            }
+        )
