@@ -30,8 +30,6 @@ class PatchWrapper(ProxyWrapper):
         "set_joinstyle",
         "set_path",
     )
-    _xunits = ()
-    _yunits = ()
     required_keys = {
         "edgecolor",
         "facecolor",
@@ -50,11 +48,7 @@ class PatchWrapper(ProxyWrapper):
 
     @_stale_wrapper
     def draw(self, renderer):
-        self._update_wrapped(
-            self._query_and_transform(
-                renderer, xunits=self._xunits, yunits=self._yunits
-            )
-        )
+        self._update_wrapped(self._query_and_transform(renderer))
         return self._wrapped_instance.draw(renderer)
 
     def _update_wrapped(self, data):
@@ -77,8 +71,6 @@ class RectangleWrapper(PatchWrapper):
         "set_angle",
         "set_rotation_point",
     )
-    _xunits = ("x", "width")
-    _yunits = ("y", "height")
     required_keys = PatchWrapper.required_keys | {
         "x",
         "y",
