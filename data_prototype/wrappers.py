@@ -332,7 +332,7 @@ class StepWrapper(ProxyWrapper):
         self._wrapped_instance.set_data(data["density"], data["edges"])
 
 
-class FormatedText(ProxyWrapper):
+class FormattedText(ProxyWrapper):
     _wrapped_class = _Text
     _privtized_methods = ("set_text",)
 

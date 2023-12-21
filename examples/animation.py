@@ -4,7 +4,7 @@ An animated line
 ================
 
 An animated line using a custom container class,
-:class:`.wrappers.LineWrapper`, and :class:`.wrappers.FormatedText`.
+:class:`.wrappers.LineWrapper`, and :class:`.wrappers.FormattedText`.
 
 """
 import time
@@ -19,7 +19,7 @@ from matplotlib.animation import FuncAnimation
 from data_prototype.containers import _MatplotlibTransform, Desc
 from data_prototype.conversion_node import FunctionConversionNode
 
-from data_prototype.wrappers import LineWrapper, FormatedText
+from data_prototype.wrappers import LineWrapper, FormattedText
 
 
 class SinOfTime:
@@ -62,7 +62,7 @@ def update(frame, art):
 
 sot_c = SinOfTime()
 lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
-fc = FormatedText(
+fc = FormattedText(
     sot_c,
     FunctionConversionNode.from_funcs(
         {"text": lambda phase: f"ϕ={phase:.2f}", "x": lambda: 2 * np.pi, "y": lambda: 1}
