@@ -12,7 +12,7 @@ import numpy as np
 
 from matplotlib.colors import Normalize
 
-from data_prototype.wrappers import LineWrapper, FormatedText
+from data_prototype.wrappers import LineWrapper, FormattedText
 from data_prototype.containers import ArrayContainer
 from data_prototype.conversion_node import FunctionConversionNode
 
@@ -63,7 +63,7 @@ for j in range(10):
         )
     )
     ax.add_artist(
-        FormatedText(
+        FormattedText(
             ac,
             text_converter,
             x=2 * np.pi,
