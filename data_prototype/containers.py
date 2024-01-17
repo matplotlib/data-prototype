@@ -48,8 +48,41 @@ class Desc:
         specification: dict[str, ShapeSpec | "Desc"],
         actual: dict[str, ShapeSpec | "Desc"],
         *,
-        broadcast=False,
-    ) -> bool:
+        broadcast: bool = False,
+    ) -> None:
+        """Validate specified shape relationships against a provided set of shapes.
+
+        Shapes provided are tuples of int | str. If a specification calls for an int,
+        the exact size is expected.
+        If it is a str, it must be a single capital letter optionally followed by ``+``
+        or ``-`` an integer value.
+        The same letter used in the specification must represent the same value in all
+        appearances. The value may, however, be a variable (with an offset) in the
+        actual shapes (which does not need to have the same letter).
+
+        Shapes may be provided as raw tuples or as ``Desc`` objects.
+
+        Parameters
+        ----------
+        specification: dict[str, ShapeSpec | "Desc"]
+           The desired shape relationships
+        actual: dict[str, ShapeSpec | "Desc"]
+           The shapes to test for compliance
+
+        Keyword Parameters
+        ------------------
+        broadcast: bool
+           Whether to allow broadcasted shapes to pass (i.e. actual shapes with a ``1``
+           will not cause exceptions regardless of what the specified shape value is)
+
+        Raises
+        ------
+        KeyError:
+            If a required field from the specification is missing in the provided actual
+            values.
+        ValueError:
+            If shapes are incompatible in any other way
+        """
         specvars: dict[str, int | tuple[str, int]] = {}
         for fieldname in specification:
             spec = specification[fieldname]
