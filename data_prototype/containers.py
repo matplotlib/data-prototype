@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import (
     Protocol,
@@ -38,10 +40,8 @@ class Desc:
     #   - what is the relative size to the other variable values (N vs N+1)
     # We are probably going to have to implement a DSL for this (😞)
     shape: ShapeSpec
-    # TODO: is using a string better?
     dtype: np.dtype
-    # TODO: do we want to include this at this level?  "naive" means unit-unaware.
-    units: str = "naive"
+    coordinates: str = "naive"
 
     @staticmethod
     def validate_shapes(
@@ -128,6 +128,21 @@ class Desc:
                         f"{spec}"
                     )
         return None
+
+    @staticmethod
+    def compatible(a: dict[str, Desc], b: dict[str, Desc]) -> bool:
+        """Determine if ``a`` is a valid input for ``b``.
+
+        Note: ``a`` _may_ have additional keys.
+        """
+        try:
+            Desc.validate_shapes(b, a)
+        except (KeyError, ValueError):
+            return False
+        for k, v in b.items():
+            if a[k].coordinates != v.coordinates:
+                return False
+        return True
 
 
 class DataContainer(Protocol):
