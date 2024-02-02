@@ -1,8 +1,12 @@
 from collections.abc import Sequence
+from typing import Callable
 from dataclasses import dataclass
 from typing import Any
+import numpy as np
 
-from .containers import Desc
+from data_prototype.containers import Desc
+
+from matplotlib.transforms import Transform
 
 
 @dataclass
@@ -40,6 +44,66 @@ class SequenceEdge(Edge):
         for edge in self.edges:
             input |= edge.evaluate(**{k: input[k] for k in edge.input})
         return {k: input[k] for k in self.output}
+
+
+@dataclass
+class FuncEdge(Edge):
+    # TODO: more explicit callable boundaries?
+    func: Callable = lambda: {}
+
+    @classmethod
+    def from_func(
+        cls,
+        name: str,
+        func: Callable,
+        input: str | dict[str, Desc],
+        output: str | dict[str, Desc],
+    ):
+        # dtype/shape is reductive here, but I like the idea of being able to just
+        # supply a function and the input/output coordinates for many things
+        if isinstance(input, str):
+            import inspect
+
+            input_vars = inspect.signature(func).parameters.keys()
+            input = {k: Desc(("N",), np.dtype("f8"), input) for k in input_vars}
+        if isinstance(output, str):
+            output = {k: Desc(("N",), np.dtype("f8"), output) for k in input.keys()}
+
+        return cls(name, input, output, False, func)
+
+    def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
+        res = self.func(**{k: input[k] for k in self.input})
+
+        if isinstance(res, dict):
+            # TODO: more sanity checks here?
+            # How forgiving do we _really_ wish to be?
+            return res
+        elif isinstance(res, tuple):
+            if len(res) != len(self.output):
+                raise RuntimeError(
+                    f"Expected {len(self.output)} return values, got {len(res)}"
+                )
+            return {k: v for k, v in zip(self.output, res)}
+        elif len(self.output) == 1:
+            return {k: res for k in self.output}
+        raise RuntimeError("Output of function does not match expected output")
+
+
+@dataclass
+class TransformEdge(Edge):
+    transform: Transform | None = None
+
+    # TODO: helper for common cases/validation?
+
+    def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
+        # TODO: ensure ordering?
+        # Stacking and unstacking at every step seems inefficient,
+        # especially if initially given as stacked
+        if self.transform is None:
+            return input
+        inp = np.stack([input[k] for k in self.input], axis=-1)
+        outp = self.transform.transform(inp)
+        return {k: v for k, v in zip(self.output, outp.T)}
 
 
 class Graph:
@@ -123,6 +187,7 @@ class Graph:
                 )
 
         pos = nx.planar_layout(G)
+        plt.figure()
         nx.draw(G, pos=pos, with_labels=True)
         nx.draw_networkx_edge_labels(G, pos=pos)
-        plt.show()
+        # plt.show()
