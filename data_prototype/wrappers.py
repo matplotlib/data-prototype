@@ -18,7 +18,8 @@ from matplotlib.collections import (
 )
 from matplotlib.artist import Artist as _Artist
 
-from data_prototype.containers import DataContainer, _MatplotlibTransform
+from data_prototype.containers import DataContainer, _MatplotlibTransform, Desc
+from data_prototype.conversion_edge import TransformEdge, Graph
 from data_prototype.conversion_node import (
     ConversionNode,
     RenameConversionNode,
@@ -131,19 +132,37 @@ class ProxyWrapperBase:
         """
         # extract what we need to about the axes to query the data
         ax = self.axes
-        # TODO do we want to trust the implicit renderer on the Axes?
-        ax_bbox = ax.get_window_extent(renderer)
 
         # actually query the underlying data.  This returns both the (raw) data
         # and key to use for caching.
-        bb_size = ax_bbox.size
-        data, cache_key = self.data.query(
-            # TODO do this needs to be (de) unitized
-            # TODO figure out why caching this did not work
-            ax.transAxes - ax.transData,
-            # TODO find better way to placate mypy
-            (int(round(bb_size[0])), int(round(bb_size[1]))),
-        )
+        edges = [
+            TransformEdge(
+                "axes",
+                {
+                    "x": Desc(("N",), np.dtype("f8"), coordinates="data"),
+                    "y": Desc(("N",), np.dtype("f8"), coordinates="data"),
+                },
+                {
+                    "x": Desc(("N",), np.dtype("f8"), coordinates="axes"),
+                    "y": Desc(("N",), np.dtype("f8"), coordinates="axes"),
+                },
+                transform=ax.transData - ax.transAxes,
+            ),
+            TransformEdge(
+                "axes",
+                {
+                    "x": Desc(("N",), np.dtype("f8"), coordinates="axes"),
+                    "y": Desc(("N",), np.dtype("f8"), coordinates="axes"),
+                },
+                {
+                    "x": Desc(("N",), np.dtype("f8"), coordinates="display"),
+                    "y": Desc(("N",), np.dtype("f8"), coordinates="display"),
+                },
+                transform=ax.transAxes,
+            ),
+        ]
+        graph = Graph(edges)
+        data, cache_key = self.data.query(graph, "axes")
         # see if we can short-circuit
         try:
             return self._cache[cache_key]

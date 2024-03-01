@@ -18,7 +18,8 @@ import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import _MatplotlibTransform, Desc
+from data_prototype.containers import Desc
+from data_prototype.conversion_edge import Graph
 
 from data_prototype.wrappers import PathCollectionWrapper
 
@@ -41,8 +42,8 @@ class Lissajous:
 
     def query(
         self,
-        transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def next_time():
             cur_time = time.time()

@@ -21,7 +21,7 @@ from matplotlib.colors import Normalize
 import numpy as np
 
 from data_prototype.wrappers import ImageWrapper
-from data_prototype.containers import _MatplotlibTransform, Desc
+from data_prototype.containers import Desc
 
 from skimage.transform import downscale_local_mean
 
@@ -45,10 +45,47 @@ class Subsample:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph,
+        parent_coordinates="axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        (x1, y1), (x2, y2) = coord_transform.transform([[0, 0], [1, 1]])
+        data_lim = graph.evaluator(
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="data",
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="data",
+                ),
+            },
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+            },
+        ).inverse
+
+        pts = data_lim.evaluate({"x": (0, 1), "y": (0, 1)})
+        x1, x2 = pts["x"]
+        y1, y2 = pts["y"]
 
         xi1 = np.argmin(np.abs(x - x1))
         yi1 = np.argmin(np.abs(y - y1))

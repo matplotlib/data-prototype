@@ -19,6 +19,11 @@ from cachetools import LFUCache
 import numpy as np
 import pandas as pd
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .conversion_edge import Graph
+
 
 class _MatplotlibTransform(Protocol):
     def transform(self, verts):
@@ -148,9 +153,8 @@ class Desc:
 class DataContainer(Protocol):
     def query(
         self,
-        # TODO 3D?!!
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
         /,
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         """
@@ -208,8 +212,8 @@ class ArrayContainer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return dict(self._data), self._cache_key
 
@@ -233,8 +237,8 @@ class RandomContainer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {k: np.random.randn(*d.shape) for k, d in self._desc.items()}, str(
             uuid.uuid4()
@@ -301,31 +305,101 @@ class FuncContainer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        hash_key = self._query_hash(coord_transform, size)
-        if hash_key in self._cache:
-            return self._cache[hash_key], hash_key
+        # hash_key = self._query_hash(coord_transform, size)
+        # if hash_key in self._cache:
+        #    return self._cache[hash_key], hash_key
 
-        xpix, ypix = size
-        x_data, _ = coord_transform.transform(
-            np.vstack(
-                [
-                    np.linspace(0, 1, int(xpix) * 2),
-                    np.zeros(int(xpix) * 2),
-                ]
-            ).T
-        ).T
-        _, y_data = coord_transform.transform(
-            np.vstack(
-                [
-                    np.zeros(int(ypix) * 2),
-                    np.linspace(0, 1, int(ypix) * 2),
-                ]
-            ).T
-        ).T
+        data_lim = graph.evaluator(
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="data",
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="data",
+                ),
+            },
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+            },
+        ).inverse
+        screen_size = graph.evaluator(
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+            },
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="display",
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="display",
+                ),
+            },
+        )
 
+        screen_dims = screen_size.evaluate({"x": [0, 1], "y": [0, 1]})
+        xpix, ypix = np.ceil(np.abs(np.diff(screen_dims["x"]))), np.ceil(
+            np.abs(np.diff(screen_dims["y"]))
+        )
+
+        x_data = data_lim.evaluate(
+            {
+                "x": np.linspace(0, 1, int(xpix) * 2),
+                "y": np.zeros(int(xpix) * 2),
+            }
+        )["x"]
+        y_data = data_lim.evaluate(
+            {
+                "x": np.zeros(int(ypix) * 2),
+                "y": np.linspace(0, 1, int(ypix) * 2),
+            }
+        )["y"]
+
+        hash_key = str(uuid.uuid4())
         ret = self._cache[hash_key] = dict(
             **{k: f(x_data) for k, f in self._xfuncs.items()},
             **{k: f(y_data) for k, f in self._yfuncs.items()},
@@ -350,11 +424,49 @@ class HistContainer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         dmin, dmax = self._full_range
-        xmin, ymin, xmax, ymax = coord_transform.transform([[0, 0], [1, 1]]).flatten()
+
+        data_lim = graph.evaluator(
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="data",
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates="data",
+                ),
+            },
+            {
+                "x": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+                "y": Desc(
+                    ("N",),
+                    np.dtype(
+                        "f8",
+                    ),
+                    coordinates=parent_coordinates,
+                ),
+            },
+        ).inverse
+
+        pts = data_lim.evaluate({"x": (0, 1), "y": (0, 1)})
+        xmin, xmax = pts["x"]
+        ymin, ymax = pts["y"]
 
         xmin, xmax = np.clip([xmin, xmax], dmin, dmax)
         hash_key = hash((xmin, xmax))
@@ -398,8 +510,8 @@ class SeriesContainer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         return {
             self._index_name: self._data.index.values,
@@ -440,8 +552,8 @@ class DataFrameContainer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         ret = {}
         if self._index_name is not None:
@@ -463,10 +575,10 @@ class ReNamer:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        base, cache_key = self._data.query(coord_transform, size)
+        base, cache_key = self._data.query(graph, parent_coordinates)
         return {v: base[k] for k, v in self._mapping.items()}, cache_key
 
     def describe(self):
@@ -481,13 +593,13 @@ class DataUnion:
 
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         cache_keys = []
         ret = {}
         for data in self._datas:
-            base, cache_key = data.query(coord_transform, size)
+            base, cache_key = data.query(graph, parent_coordinates)
             ret.update(base)
             cache_keys.append(cache_key)
         return ret, hash(tuple(cache_keys))
@@ -499,8 +611,8 @@ class DataUnion:
 class WebServiceContainer:
     def query(
         self,
-        coord_transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def hit_some_database():
             {}, "1"

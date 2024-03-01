@@ -14,14 +14,14 @@ class Edge:
     name: str
     input: dict[str, Desc]
     output: dict[str, Desc]
-    invertable: bool = False
+    invertable: bool = True
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         return input
 
     @property
     def inverse(self) -> "Edge":
-        raise NotImplementedError
+        return Edge(self.name + "_r", self.output, self.input)
 
 
 @dataclass
@@ -42,14 +42,23 @@ class SequenceEdge(Edge):
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         for edge in self.edges:
-            input |= edge.evaluate(**{k: input[k] for k in edge.input})
+            print(input)
+            input |= edge.evaluate({k: input[k] for k in edge.input})
+        print(input)
         return {k: input[k] for k in self.output}
+
+    @property
+    def inverse(self) -> "SequenceEdge":
+        return SequenceEdge.from_edges(
+            self.name + "_r", [e.inverse for e in self.edges[::-1]], self.input
+        )
 
 
 @dataclass
 class FuncEdge(Edge):
     # TODO: more explicit callable boundaries?
     func: Callable = lambda: {}
+    inverse_func: Callable | None = None
 
     @classmethod
     def from_func(
@@ -58,6 +67,7 @@ class FuncEdge(Edge):
         func: Callable,
         input: str | dict[str, Desc],
         output: str | dict[str, Desc],
+        inverse: Callable | None = None,
     ):
         # dtype/shape is reductive here, but I like the idea of being able to just
         # supply a function and the input/output coordinates for many things
@@ -69,7 +79,7 @@ class FuncEdge(Edge):
         if isinstance(output, str):
             output = {k: Desc(("N",), np.dtype("f8"), output) for k in input.keys()}
 
-        return cls(name, input, output, False, func)
+        return cls(name, input, output, inverse is not None, func, inverse)
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         res = self.func(**{k: input[k] for k in self.input})
@@ -88,10 +98,16 @@ class FuncEdge(Edge):
             return {k: res for k in self.output}
         raise RuntimeError("Output of function does not match expected output")
 
+    @property
+    def inverse(self) -> "FuncEdge":
+        return FuncEdge.from_func(
+            self.name + "_r", self.inverse_func, self.output, self.input, self.func
+        )
+
 
 @dataclass
 class TransformEdge(Edge):
-    transform: Transform | None = None
+    transform: Transform | Callable[[], Transform] | None = None
 
     # TODO: helper for common cases/validation?
 
@@ -101,9 +117,28 @@ class TransformEdge(Edge):
         # especially if initially given as stacked
         if self.transform is None:
             return input
+        elif isinstance(self.transform, Callable):
+            trf = self.transform()
+        else:
+            trf = self.transform
         inp = np.stack([input[k] for k in self.input], axis=-1)
-        outp = self.transform.transform(inp)
+        outp = trf.transform(inp)
         return {k: v for k, v in zip(self.output, outp.T)}
+
+    @property
+    def inverse(self) -> "TransformEdge":
+        if isinstance(self.transform, Callable):
+            return TransformEdge(
+                self.name + "_r",
+                self.output,
+                self.input,
+                True,
+                lambda: self.transform().inverted(),
+            )
+
+        return TransformEdge(
+            self.name + "_r", self.output, self.input, True, self.transform.inverted()
+        )
 
 
 class Graph:
