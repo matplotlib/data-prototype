@@ -1,6 +1,6 @@
 import pytest
 
-from data_prototype.containers import Desc
+from data_prototype.description import Desc
 
 
 @pytest.mark.parametrize(

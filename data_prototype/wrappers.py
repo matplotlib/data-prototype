@@ -19,6 +19,8 @@ from matplotlib.collections import (
 from matplotlib.artist import Artist as _Artist
 
 from data_prototype.containers import DataContainer, _MatplotlibTransform
+from data_prototype.description import Desc, desc_like
+from data_prototype.conversion_edge import TransformEdge, Graph
 from data_prototype.conversion_node import (
     ConversionNode,
     RenameConversionNode,
@@ -33,8 +35,7 @@ class _BBox(Protocol):
 
 
 class _Axis(Protocol):
-    def convert_units(self, Any) -> Any:
-        ...
+    def convert_units(self, Any) -> Any: ...
 
 
 class _Axes(Protocol):
@@ -44,14 +45,11 @@ class _Axes(Protocol):
     transData: _MatplotlibTransform
     transAxes: _MatplotlibTransform
 
-    def get_xlim(self) -> Tuple[float, float]:
-        ...
+    def get_xlim(self) -> Tuple[float, float]: ...
 
-    def get_ylim(self) -> Tuple[float, float]:
-        ...
+    def get_ylim(self) -> Tuple[float, float]: ...
 
-    def get_window_extent(self, renderer) -> _BBox:
-        ...
+    def get_window_extent(self, renderer) -> _BBox: ...
 
 
 class _Aritst(Protocol):
@@ -131,19 +129,27 @@ class ProxyWrapperBase:
         """
         # extract what we need to about the axes to query the data
         ax = self.axes
-        # TODO do we want to trust the implicit renderer on the Axes?
-        ax_bbox = ax.get_window_extent(renderer)
 
         # actually query the underlying data.  This returns both the (raw) data
         # and key to use for caching.
-        bb_size = ax_bbox.size
-        data, cache_key = self.data.query(
-            # TODO do this needs to be (de) unitized
-            # TODO figure out why caching this did not work
-            ax.transAxes - ax.transData,
-            # TODO find better way to placate mypy
-            (int(round(bb_size[0])), int(round(bb_size[1]))),
-        )
+        desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+        xy = {"x": desc, "y": desc}
+        edges = [
+            TransformEdge(
+                "axes",
+                xy,
+                desc_like(xy, coordinates="axes"),
+                transform=ax.transData - ax.transAxes,
+            ),
+            TransformEdge(
+                "axes",
+                desc_like(xy, coordinates="axes"),
+                desc_like(xy, coordinates="display"),
+                transform=ax.transAxes,
+            ),
+        ]
+        graph = Graph(edges)
+        data, cache_key = self.data.query(graph, "axes")
         # see if we can short-circuit
         try:
             return self._cache[cache_key]

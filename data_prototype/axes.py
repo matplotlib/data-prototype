@@ -102,22 +102,28 @@ class Axes(MPLAxes):
         pipeline.append(lambda x: np.ma.ravel(x))
         pipeline.append(lambda y: np.ma.ravel(y))
         pipeline.append(
-            lambda s: np.ma.ravel(s)
-            if s is not None
-            else [20]
-            if mpl.rcParams["_internal.classic_mode"]
-            else [mpl.rcParams["lines.markersize"] ** 2.0]
+            lambda s: (
+                np.ma.ravel(s)
+                if s is not None
+                else (
+                    [20]
+                    if mpl.rcParams["_internal.classic_mode"]
+                    else [mpl.rcParams["lines.markersize"] ** 2.0]
+                )
+            )
         )
         # TODO plotnonfinite/mask combining
         pipeline.append(
-            lambda marker: marker
-            if marker is not None
-            else mpl.rcParams["scatter.marker"]
+            lambda marker: (
+                marker if marker is not None else mpl.rcParams["scatter.marker"]
+            )
         )
         pipeline.append(
-            lambda marker: marker
-            if isinstance(marker, mmarkers.MarkerStyle)
-            else mmarkers.MarkerStyle(marker)
+            lambda marker: (
+                marker
+                if isinstance(marker, mmarkers.MarkerStyle)
+                else mmarkers.MarkerStyle(marker)
+            )
         )
         pipeline.append(
             FunctionConversionNode.from_funcs(

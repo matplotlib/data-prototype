@@ -8,6 +8,7 @@ Inspired by https://twitter.com/_brohrer_/status/1584681864648065027
 An animated scatter plot using a custom container and :class:`.wrappers.PathCollectionWrapper`
 
 """
+
 import time
 from typing import Dict, Tuple, Any, Union
 from functools import partial
@@ -18,7 +19,8 @@ import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import _MatplotlibTransform, Desc
+from data_prototype.conversion_edge import Graph
+from data_prototype.description import Desc
 
 from data_prototype.wrappers import PathCollectionWrapper
 
@@ -41,8 +43,8 @@ class Lissajous:
 
     def query(
         self,
-        transform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def next_time():
             cur_time = time.time()

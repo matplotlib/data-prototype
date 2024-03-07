@@ -7,6 +7,7 @@ An animated line using a custom container class,
 :class:`.wrappers.LineWrapper`, and :class:`.wrappers.FormattedText`.
 
 """
+
 import time
 from typing import Dict, Tuple, Any, Union
 from functools import partial
@@ -16,7 +17,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import _MatplotlibTransform, Desc
+from data_prototype.conversion_edge import Graph
+from data_prototype.description import Desc
+
 from data_prototype.conversion_node import FunctionConversionNode
 
 from data_prototype.wrappers import LineWrapper, FormattedText
@@ -37,8 +40,8 @@ class SinOfTime:
 
     def query(
         self,
-        coord_transformtransform: _MatplotlibTransform,
-        size: Tuple[int, int],
+        graph: Graph,
+        parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         th = np.linspace(0, 2 * np.pi, self.N)
 

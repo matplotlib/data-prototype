@@ -7,6 +7,7 @@ In this example, sliders are used to control the frequency and amplitude of
 a sine wave.
 
 """
+
 import inspect
 
 import numpy as np
@@ -23,7 +24,7 @@ class SliderContainer(FuncContainer):
         self._sliders = sliders
         for slider in sliders.values():
             slider.on_changed(
-                lambda x, sld=slider: sld.ax.figure.canvas.draw_idle(),
+                lambda _, sld=slider: sld.ax.figure.canvas.draw_idle(),
             )
 
         def get_needed_keys(f, offset=1):
@@ -43,8 +44,8 @@ class SliderContainer(FuncContainer):
             },
         )
 
-    def _query_hash(self, coord_transform, size):
-        key = super()._query_hash(coord_transform, size)
+    def _query_hash(self, graph, parent_coordinates):
+        key = super()._query_hash(graph, parent_coordinates)
         # inject the slider values into the hashing logic
         return hash((key, tuple(s.val for s in self._sliders.values())))
 
@@ -111,7 +112,7 @@ fc = SliderContainer(
         ),
         # the color data has to take the x (because reasons), but just
         # needs the phase
-        "color": ((1,), lambda t, phase: phase),
+        "color": ((1,), lambda _, phase: phase),
     },
     # bind the sliders to the data container
     amplitude=amp_slider,
@@ -133,7 +134,7 @@ ax.add_artist(lw)
 resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
 button = Button(resetax, "Reset", hovercolor="0.975")
 button.on_clicked(
-    lambda event: [sld.reset() for sld in (freq_slider, amp_slider, phase_slider)]
+    lambda _: [sld.reset() for sld in (freq_slider, amp_slider, phase_slider)]
 )
 
 plt.show()

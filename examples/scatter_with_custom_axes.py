@@ -11,7 +11,6 @@ This is here to show what does work and what does not work with the current
 implementation of container-based artist drawing.
 """
 
-
 import data_prototype.axes  # side-effect registers projection # noqa
 
 import matplotlib.pyplot as plt
