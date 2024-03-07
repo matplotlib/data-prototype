@@ -26,11 +26,9 @@ if TYPE_CHECKING:
 
 
 class _MatplotlibTransform(Protocol):
-    def transform(self, verts):
-        ...
+    def transform(self, verts): ...
 
-    def __sub__(self, other) -> "_MatplotlibTransform":
-        ...
+    def __sub__(self, other) -> "_MatplotlibTransform": ...
 
 
 class DataContainer(Protocol):
@@ -80,8 +78,7 @@ class DataContainer(Protocol):
         ...
 
 
-class NoNewKeys(ValueError):
-    ...
+class NoNewKeys(ValueError): ...
 
 
 class ArrayContainer:
@@ -89,9 +86,11 @@ class ArrayContainer:
         self._data = data
         self._cache_key = str(uuid.uuid4())
         self._desc = {
-            k: Desc(v.shape, v.dtype)
-            if isinstance(v, np.ndarray)
-            else Desc((), type(v))
+            k: (
+                Desc(v.shape, v.dtype)
+                if isinstance(v, np.ndarray)
+                else Desc((), type(v))
+            )
             for k, v in data.items()
         }
 

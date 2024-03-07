@@ -6,6 +6,7 @@ An simple scatter plot using PathCollectionWrapper
 A quick scatter plot using :class:`.containers.ArrayContainer` and
 :class:`.wrappers.PathCollectionWrapper`.
 """
+
 import numpy as np
 
 import matplotlib.pyplot as plt

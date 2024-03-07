@@ -8,6 +8,7 @@ Inspired by https://twitter.com/_brohrer_/status/1584681864648065027
 An animated scatter plot using a custom container and :class:`.wrappers.PathCollectionWrapper`
 
 """
+
 import time
 from typing import Dict, Tuple, Any, Union
 from functools import partial

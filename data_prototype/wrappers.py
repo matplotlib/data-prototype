@@ -35,8 +35,7 @@ class _BBox(Protocol):
 
 
 class _Axis(Protocol):
-    def convert_units(self, Any) -> Any:
-        ...
+    def convert_units(self, Any) -> Any: ...
 
 
 class _Axes(Protocol):
@@ -46,14 +45,11 @@ class _Axes(Protocol):
     transData: _MatplotlibTransform
     transAxes: _MatplotlibTransform
 
-    def get_xlim(self) -> Tuple[float, float]:
-        ...
+    def get_xlim(self) -> Tuple[float, float]: ...
 
-    def get_ylim(self) -> Tuple[float, float]:
-        ...
+    def get_ylim(self) -> Tuple[float, float]: ...
 
-    def get_window_extent(self, renderer) -> _BBox:
-        ...
+    def get_window_extent(self, renderer) -> _BBox: ...
 
 
 class _Aritst(Protocol):

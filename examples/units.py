@@ -5,6 +5,7 @@ Using pint units with PathCollectionWrapper
 
 Using third party units functionality in conjunction with Matplotlib Axes
 """
+
 import numpy as np
 
 import matplotlib.pyplot as plt

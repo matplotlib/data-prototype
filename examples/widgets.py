@@ -7,6 +7,7 @@ In this example, sliders are used to control the frequency and amplitude of
 a sine wave.
 
 """
+
 import inspect
 
 import numpy as np

@@ -7,6 +7,7 @@ An animated line using a custom container class,
 :class:`.wrappers.LineWrapper`, and :class:`.wrappers.FormattedText`.
 
 """
+
 import time
 from typing import Dict, Tuple, Any, Union
 from functools import partial
