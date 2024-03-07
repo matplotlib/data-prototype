@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import (
     Protocol,
     Dict,
@@ -10,7 +9,6 @@ from typing import (
     Union,
     Callable,
     MutableMapping,
-    TypeAlias,
 )
 import uuid
 
@@ -18,6 +16,8 @@ from cachetools import LFUCache
 
 import numpy as np
 import pandas as pd
+
+from .description import Desc, desc_like
 
 from typing import TYPE_CHECKING
 
@@ -31,123 +31,6 @@ class _MatplotlibTransform(Protocol):
 
     def __sub__(self, other) -> "_MatplotlibTransform":
         ...
-
-
-ShapeSpec: TypeAlias = Tuple[Union[str, int], ...]
-
-
-@dataclass(frozen=True)
-class Desc:
-    # TODO: sort out how to actually spell this.  We need to know:
-    #   - what the number of dimensions is (1d vs 2d vs ...)
-    #   - is this a fixed size dimension (e.g. 2 for xextent)
-    #   - is this a variable size depending on the query (e.g. N)
-    #   - what is the relative size to the other variable values (N vs N+1)
-    # We are probably going to have to implement a DSL for this (😞)
-    shape: ShapeSpec
-    dtype: np.dtype
-    coordinates: str = "naive"
-
-    @staticmethod
-    def validate_shapes(
-        specification: dict[str, ShapeSpec | "Desc"],
-        actual: dict[str, ShapeSpec | "Desc"],
-        *,
-        broadcast: bool = False,
-    ) -> None:
-        """Validate specified shape relationships against a provided set of shapes.
-
-        Shapes provided are tuples of int | str. If a specification calls for an int,
-        the exact size is expected.
-        If it is a str, it must be a single capital letter optionally followed by ``+``
-        or ``-`` an integer value.
-        The same letter used in the specification must represent the same value in all
-        appearances. The value may, however, be a variable (with an offset) in the
-        actual shapes (which does not need to have the same letter).
-
-        Shapes may be provided as raw tuples or as ``Desc`` objects.
-
-        Parameters
-        ----------
-        specification: dict[str, ShapeSpec | "Desc"]
-           The desired shape relationships
-        actual: dict[str, ShapeSpec | "Desc"]
-           The shapes to test for compliance
-
-        Keyword Parameters
-        ------------------
-        broadcast: bool
-           Whether to allow broadcasted shapes to pass (i.e. actual shapes with a ``1``
-           will not cause exceptions regardless of what the specified shape value is)
-
-        Raises
-        ------
-        KeyError:
-            If a required field from the specification is missing in the provided actual
-            values.
-        ValueError:
-            If shapes are incompatible in any other way
-        """
-        specvars: dict[str, int | tuple[str, int]] = {}
-        for fieldname in specification:
-            spec = specification[fieldname]
-            if fieldname not in actual:
-                raise KeyError(
-                    f"Actual is missing {fieldname!r}, required by specification."
-                )
-            desc = actual[fieldname]
-            if isinstance(spec, Desc):
-                spec = spec.shape
-            if isinstance(desc, Desc):
-                desc = desc.shape
-            if not broadcast:
-                if len(spec) != len(desc):
-                    raise ValueError(
-                        f"{fieldname!r} shape {desc} incompatible with specification "
-                        f"{spec}."
-                    )
-            elif len(desc) > len(spec):
-                raise ValueError(
-                    f"{fieldname!r} shape {desc} incompatible with specification "
-                    f"{spec}."
-                )
-            for speccomp, desccomp in zip(spec[::-1], desc[::-1]):
-                if broadcast and desccomp == 1:
-                    continue
-                if isinstance(speccomp, str):
-                    specv, specoff = speccomp[0], int(speccomp[1:] or 0)
-
-                    if isinstance(desccomp, str):
-                        descv, descoff = desccomp[0], int(desccomp[1:] or 0)
-                        entry = (descv, descoff - specoff)
-                    else:
-                        entry = desccomp - specoff
-
-                    if specv in specvars and entry != specvars[specv]:
-                        raise ValueError(f"Found two incompatible values for {specv!r}")
-
-                    specvars[specv] = entry
-                elif speccomp != desccomp:
-                    raise ValueError(
-                        f"{fieldname!r} shape {desc} incompatible with specification "
-                        f"{spec}"
-                    )
-        return None
-
-    @staticmethod
-    def compatible(a: dict[str, Desc], b: dict[str, Desc]) -> bool:
-        """Determine if ``a`` is a valid input for ``b``.
-
-        Note: ``a`` _may_ have additional keys.
-        """
-        try:
-            Desc.validate_shapes(b, a)
-        except (KeyError, ValueError):
-            return False
-        for k, v in b.items():
-            if a[k].coordinates != v.coordinates:
-                return False
-        return True
 
 
 class DataContainer(Protocol):
@@ -184,6 +67,7 @@ class DataContainer(Protocol):
             This is a key that clients can use to cache down-stream
             computations on this data.
         """
+        ...
 
     def describe(self) -> Dict[str, Desc]:
         """
@@ -193,6 +77,7 @@ class DataContainer(Protocol):
         -------
         Dict[str, Desc]
         """
+        ...
 
 
 class NoNewKeys(ValueError):
@@ -312,73 +197,16 @@ class FuncContainer:
         # if hash_key in self._cache:
         #    return self._cache[hash_key], hash_key
 
+        desc = Desc(("N",), np.dtype("f8"))
+        xy = {"x": desc, "y": desc}
         data_lim = graph.evaluator(
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="data",
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="data",
-                ),
-            },
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-            },
+            desc_like(xy, coordinates="data"),
+            desc_like(xy, coordinates=parent_coordinates),
         ).inverse
+
         screen_size = graph.evaluator(
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-            },
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="display",
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="display",
-                ),
-            },
+            desc_like(xy, coordinates=parent_coordinates),
+            desc_like(xy, coordinates="display"),
         )
 
         screen_dims = screen_size.evaluate({"x": [0, 1], "y": [0, 1]})
@@ -429,39 +257,11 @@ class HistContainer:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         dmin, dmax = self._full_range
 
+        desc = Desc(("N",), np.dtype("f8"))
+        xy = {"x": desc, "y": desc}
         data_lim = graph.evaluator(
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="data",
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="data",
-                ),
-            },
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-            },
+            desc_like(xy, coordinates="data"),
+            desc_like(xy, coordinates=parent_coordinates),
         ).inverse
 
         pts = data_lim.evaluate({"x": (0, 1), "y": (0, 1)})
@@ -493,7 +293,7 @@ class HistContainer:
 
 
 class SeriesContainer:
-    _data: pd.DataFrame
+    _data: pd.Series
     _index_name: str
     _hash_key: str
 
@@ -615,7 +415,7 @@ class WebServiceContainer:
         parent_coordinates: str = "axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         def hit_some_database():
-            {}, "1"
+            return {}, "1"
 
         data, etag = hit_some_database()
         return data, etag

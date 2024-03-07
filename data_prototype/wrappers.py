@@ -18,7 +18,8 @@ from matplotlib.collections import (
 )
 from matplotlib.artist import Artist as _Artist
 
-from data_prototype.containers import DataContainer, _MatplotlibTransform, Desc
+from data_prototype.containers import DataContainer, _MatplotlibTransform
+from data_prototype.description import Desc, desc_like
 from data_prototype.conversion_edge import TransformEdge, Graph
 from data_prototype.conversion_node import (
     ConversionNode,
@@ -135,29 +136,19 @@ class ProxyWrapperBase:
 
         # actually query the underlying data.  This returns both the (raw) data
         # and key to use for caching.
+        desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+        xy = {"x": desc, "y": desc}
         edges = [
             TransformEdge(
                 "axes",
-                {
-                    "x": Desc(("N",), np.dtype("f8"), coordinates="data"),
-                    "y": Desc(("N",), np.dtype("f8"), coordinates="data"),
-                },
-                {
-                    "x": Desc(("N",), np.dtype("f8"), coordinates="axes"),
-                    "y": Desc(("N",), np.dtype("f8"), coordinates="axes"),
-                },
+                xy,
+                desc_like(xy, coordinates="axes"),
                 transform=ax.transData - ax.transAxes,
             ),
             TransformEdge(
                 "axes",
-                {
-                    "x": Desc(("N",), np.dtype("f8"), coordinates="axes"),
-                    "y": Desc(("N",), np.dtype("f8"), coordinates="axes"),
-                },
-                {
-                    "x": Desc(("N",), np.dtype("f8"), coordinates="display"),
-                    "y": Desc(("N",), np.dtype("f8"), coordinates="display"),
-                },
+                desc_like(xy, coordinates="axes"),
+                desc_like(xy, coordinates="display"),
                 transform=ax.transAxes,
             ),
         ]

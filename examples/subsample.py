@@ -20,8 +20,8 @@ from matplotlib.colors import Normalize
 
 import numpy as np
 
+from data_prototype.description import Desc, desc_like
 from data_prototype.wrappers import ImageWrapper
-from data_prototype.containers import Desc
 
 from skimage.transform import downscale_local_mean
 
@@ -48,40 +48,9 @@ class Subsample:
         graph,
         parent_coordinates="axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        data_lim = graph.evaluator(
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="data",
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates="data",
-                ),
-            },
-            {
-                "x": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-                "y": Desc(
-                    ("N",),
-                    np.dtype(
-                        "f8",
-                    ),
-                    coordinates=parent_coordinates,
-                ),
-            },
-        ).inverse
+        desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+        xy = {"x": desc, "y": desc}
+        data_lim = graph.evaluator(xy, desc_like(xy, coordinates="axes")).inverse
 
         pts = data_lim.evaluate({"x": (0, 1), "y": (0, 1)})
         x1, x2 = pts["x"]

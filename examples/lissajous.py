@@ -18,8 +18,8 @@ import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.containers import Desc
 from data_prototype.conversion_edge import Graph
+from data_prototype.description import Desc
 
 from data_prototype.wrappers import PathCollectionWrapper
 
