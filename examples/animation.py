@@ -22,7 +22,8 @@ from data_prototype.description import Desc
 
 from data_prototype.conversion_node import FunctionConversionNode
 
-from data_prototype.wrappers import LineWrapper, FormattedText
+from data_prototype.wrappers import FormattedText
+from data_prototype.artist import Line, CompatibilityArtist as CA
 
 
 class SinOfTime:
@@ -64,7 +65,7 @@ def update(frame, art):
 
 
 sot_c = SinOfTime()
-lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
+lw = CA(Line(sot_c, linewidth=5, color="green", label="sin(time)"))
 fc = FormattedText(
     sot_c,
     FunctionConversionNode.from_funcs(

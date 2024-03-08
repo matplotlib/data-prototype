@@ -4,14 +4,14 @@ Show data frame
 ===============
 
 Wrapping a :class:`pandas.DataFrame` using :class:`.containers.DataFrameContainer`
-and :class:`.wrappers.LineWrapper`.
+and :class:`.artist.Line`.
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from data_prototype.wrappers import LineWrapper
+from data_prototype.artist import Line, CompatibilityArtist as CA
 from data_prototype.containers import DataFrameContainer
 
 th = np.linspace(0, 4 * np.pi, 256)
@@ -34,9 +34,9 @@ dc3 = DataFrameContainer(df, index_name="x", col_names={"cos": "y"})
 
 
 fig, (ax1, ax2) = plt.subplots(2, 1)
-ax1.add_artist(LineWrapper(dc1, lw=5, color="green", label="sin"))
-ax2.add_artist(LineWrapper(dc2, lw=5, color="green", label="sin"))
-ax2.add_artist(LineWrapper(dc3, lw=5, color="blue", label="cos"))
+ax1.add_artist(CA(Line(dc1, linewidth=5, color="green", label="sin")))
+ax2.add_artist(CA(Line(dc2, linewidth=5, color="green", label="sin")))
+ax2.add_artist(CA(Line(dc3, linewidth=5, color="blue", label="cos")))
 for ax in (ax1, ax2):
     ax.set_xlim(0, np.pi * 4)
     ax.set_ylim(-1.1, 1.1)

@@ -42,9 +42,7 @@ class SequenceEdge(Edge):
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         for edge in self.edges:
-            print(input)
             input |= edge.evaluate({k: input[k] for k in edge.input})
-        print(input)
         return {k: input[k] for k in self.output}
 
     @property

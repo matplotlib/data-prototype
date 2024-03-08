@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeAlias, Tuple, Union
+from typing import TypeAlias, Tuple, Union, overload
 
 import numpy as np
 
@@ -119,6 +119,14 @@ class Desc:
             if a[k].coordinates != v.coordinates:
                 return False
         return True
+
+
+@overload
+def desc_like(desc: Desc, shape=None, dtype=None, coordinates=None) -> Desc: ...
+@overload
+def desc_like(
+    desc: dict[str, Desc], shape=None, dtype=None, coordinates=None
+) -> dict[str, Desc]: ...
 
 
 def desc_like(desc, shape=None, dtype=None, coordinates=None):

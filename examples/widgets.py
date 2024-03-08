@@ -14,9 +14,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
-from data_prototype.wrappers import LineWrapper
+from data_prototype.artist import Line, CompatibilityArtist as CA
 from data_prototype.containers import FuncContainer
-from data_prototype.conversion_node import FunctionConversionNode
+from data_prototype.conversion_edge import FuncEdge
 
 
 class SliderContainer(FuncContainer):
@@ -119,15 +119,20 @@ fc = SliderContainer(
     frequency=freq_slider,
     phase=phase_slider,
 )
-lw = LineWrapper(
+lw = Line(
     fc,
     # color map phase (scaled to 2pi and wrapped to [0, 1])
-    FunctionConversionNode.from_funcs(
-        {"color": lambda color: cmap((color / (2 * np.pi)) % 1)}
-    ),
-    lw=5,
+    [
+        FuncEdge.from_func(
+            "color",
+            lambda color: cmap((color / (2 * np.pi)) % 1),
+            "user",
+            "display",
+        )
+    ],
+    linewidth=5,
 )
-ax.add_artist(lw)
+ax.add_artist(CA(lw))
 
 
 # Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
