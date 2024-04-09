@@ -14,8 +14,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
-from data_prototype.artist import Line, CompatibilityArtist as CA
+from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.line import Line
 from data_prototype.containers import FuncContainer
+from data_prototype.description import Desc
 from data_prototype.conversion_edge import FuncEdge
 
 
@@ -126,11 +128,12 @@ lw = Line(
         FuncEdge.from_func(
             "color",
             lambda color: cmap((color / (2 * np.pi)) % 1),
-            "user",
-            "display",
+            {"color": Desc((1,), np.float64)},
+            {"color": Desc((), np.float64, "display")},
         )
     ],
-    linewidth=5,
+    linewidth=5.0,
+    linestyle="-",
 )
 ax.add_artist(CA(lw))
 

@@ -1,16 +1,10 @@
 from typing import Sequence
 
-
-import matplotlib.path as mpath
-import matplotlib.colors as mcolors
-import matplotlib.lines as mlines
-import matplotlib.path as mpath
-import matplotlib.transforms as mtransforms
 import numpy as np
 
 from .containers import DataContainer, ArrayContainer, DataUnion
 from .description import Desc, desc_like
-from .conversion_edge import Edge, TransformEdge, FuncEdge, Graph
+from .conversion_edge import Edge, TransformEdge
 
 
 class Artist:
@@ -26,7 +20,8 @@ class Artist:
         edges = edges or []
         self._edges = list(edges)
 
-    def draw(self, renderer, edges: Sequence[Edge]) -> None: ...
+    def draw(self, renderer, edges: Sequence[Edge]) -> None:
+        return
 
 
 class CompatibilityArtist:
@@ -98,72 +93,3 @@ class CompatibilityArtist:
             )
 
         self._artist.draw(renderer, edges)
-
-
-class Line(Artist):
-    def __init__(self, container, edges=None, **kwargs):
-        super().__init__(container, edges, **kwargs)
-
-        defaults = ArrayContainer(
-            **{
-                "color": "C0",  # TODO: interactions with cycler/rcparams?
-                "linewidth": 1,
-                "linestyle": "-",
-            }
-        )
-
-        self._container = DataUnion(defaults, self._container)
-        # These are a stand-in for units etc... just kind of placed here as no-ops
-        self._edges += [
-            FuncEdge.from_func(
-                "xvals", lambda x: x, "naive", "data", inverse=lambda x: x
-            ),
-            FuncEdge.from_func(
-                "yvals", lambda y: y, "naive", "data", inverse=lambda y: y
-            ),
-        ]
-
-    def draw(self, renderer, edges: Sequence[Edge]) -> None:
-        g = Graph(list(edges) + self._edges)
-        desc = Desc(("N",), np.dtype("f8"), "display")
-        xy = {"x": desc, "y": desc}
-        conv = g.evaluator(self._container.describe(), xy)
-        query, _ = self._container.query(g)
-        x, y = conv.evaluate(query).values()
-
-        # make the Path object
-        path = mpath.Path(np.vstack([x, y]).T)
-        # make an configure the graphic context
-        gc = renderer.new_gc()
-        gc.set_foreground(mcolors.to_rgba(query["color"]), isRGBA=True)
-        gc.set_linewidth(query["linewidth"])
-        gc.set_dashes(*mlines._get_dash_pattern(query["linestyle"]))
-        # add the line to the render buffer
-        renderer.draw_path(gc, path, mtransforms.IdentityTransform())
-
-
-class Image(Artist):
-    def __init__(self, container, edges=None, **kwargs):
-        super().__init__(container, edges, **kwargs)
-
-        defaults = ArrayContainer(
-            **{
-                "cmap": "viridis",
-                "norm": "linear",
-            }
-        )
-
-        self._container = DataUnion(defaults, self._container)
-        # These are a stand-in for units etc... just kind of placed here as no-ops
-        self._edges += [
-            FuncEdge.from_func(
-                "xvals", lambda x: x, "naive", "data", inverse=lambda x: x
-            ),
-            FuncEdge.from_func(
-                "yvals", lambda y: y, "naive", "data", inverse=lambda y: y
-            ),
-        ]
-
-    def draw(self, renderer, edges: Sequence[Edge]) -> None:
-        g = Graph(list(edges) + self._edges)
-        ...
