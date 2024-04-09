@@ -17,7 +17,7 @@ class Desc:
     # We are probably going to have to implement a DSL for this (😞)
     shape: ShapeSpec
     dtype: np.dtype
-    coordinates: str = "naive"
+    coordinates: str = "auto"
 
     @staticmethod
     def validate_shapes(
@@ -123,6 +123,8 @@ class Desc:
 
 @overload
 def desc_like(desc: Desc, shape=None, dtype=None, coordinates=None) -> Desc: ...
+
+
 @overload
 def desc_like(
     desc: dict[str, Desc], shape=None, dtype=None, coordinates=None
