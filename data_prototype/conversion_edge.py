@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from typing import Callable
 from dataclasses import dataclass
+from queue import PriorityQueue
 from typing import Any
 import numpy as np
 
-from data_prototype.containers import Desc
+from data_prototype.description import Desc, desc_like
 
 from matplotlib.transforms import Transform
 
@@ -14,6 +17,7 @@ class Edge:
     name: str
     input: dict[str, Desc]
     output: dict[str, Desc]
+    weight: float = 1
     invertable: bool = True
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
@@ -21,7 +25,7 @@ class Edge:
 
     @property
     def inverse(self) -> "Edge":
-        return Edge(self.name + "_r", self.output, self.input)
+        return Edge(self.name + "_r", self.output, self.input, self.weight)
 
 
 @dataclass
@@ -29,16 +33,28 @@ class SequenceEdge(Edge):
     edges: Sequence[Edge] = ()
 
     @classmethod
-    def from_edges(cls, name: str, edges: Sequence[Edge], output: dict[str, Desc]):
+    def from_edges(
+        cls,
+        name: str,
+        edges: Sequence[Edge],
+        output: dict[str, Desc],
+        weight: float | None = None,
+    ):
         input = {}
         intermediates = {}
         invertable = True
+        edge_sum = 0
         for edge in edges:
+            edge_sum += edge.weight
             input |= {k: v for k, v in edge.input.items() if k not in intermediates}
             intermediates |= edge.output
             if not edge.invertable:
                 invertable = False
-        return cls(name, input, output, invertable, edges)
+
+        if weight is None:
+            weight = edge_sum
+
+        return cls(name, input, output, weight, invertable, edges)
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         for edge in self.edges:
@@ -48,8 +64,57 @@ class SequenceEdge(Edge):
     @property
     def inverse(self) -> "SequenceEdge":
         return SequenceEdge.from_edges(
-            self.name + "_r", [e.inverse for e in self.edges[::-1]], self.input
+            self.name + "_r",
+            [e.inverse for e in self.edges[::-1]],
+            self.input,
+            self.weight,
         )
+
+
+@dataclass
+class CoordinateEdge(Edge):
+    """Change coordinates without changing values"""
+
+    @classmethod
+    def from_coords(
+        cls, name: str, input: dict[str, Desc | str], output: str, weight: float = 1
+    ):
+        # dtype/shape is reductive here, but I like the idea of being able to just
+        # supply only the input/output coordinates for many things
+        # could also see lowering default weight for this edge, but just defaulting everything to 1 for now
+        inp = {
+            k: v if isinstance(v, Desc) else Desc(("N",), np.dtype("f8"), v)
+            for k, v in input.items()
+        }
+        outp = {k: desc_like(v, coordinates=output) for k, v in inp.items()}
+
+        return cls(name, inp, outp, weight)
+
+    @property
+    def inverse(self) -> Edge:
+        return Edge(f"{self.name}_r", self.output, self.input, self.weight)
+
+
+@dataclass
+class DefaultEdge(Edge):
+    """Provide default values with a high weight"""
+
+    weight = 1e6
+    value: Any = None
+
+    @classmethod
+    def from_default_value(
+        cls,
+        name: str,
+        key: str,
+        output: Desc,
+        value: Any,
+        weight=1e6,
+    ) -> "DefaultEdge":
+        return cls(name, {}, {key: output}, weight, invertable=False, value=value)
+
+    def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
+        return {k: self.value for k in self.output}
 
 
 @dataclass
@@ -65,6 +130,7 @@ class FuncEdge(Edge):
         func: Callable,
         input: str | dict[str, Desc],
         output: str | dict[str, Desc],
+        weight: float = 1,
         inverse: Callable | None = None,
     ):
         # dtype/shape is reductive here, but I like the idea of being able to just
@@ -77,7 +143,7 @@ class FuncEdge(Edge):
         if isinstance(output, str):
             output = {k: Desc(("N",), np.dtype("f8"), output) for k in input.keys()}
 
-        return cls(name, input, output, inverse is not None, func, inverse)
+        return cls(name, input, output, weight, inverse is not None, func, inverse)
 
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         res = self.func(**{k: input[k] for k in self.input})
@@ -88,8 +154,10 @@ class FuncEdge(Edge):
             return res
         elif isinstance(res, tuple):
             if len(res) != len(self.output):
+                if len(self.output) == 1:
+                    return {k: res for k in self.output}
                 raise RuntimeError(
-                    f"Expected {len(self.output)} return values, got {len(res)}"
+                    f"Expected {len(self.output)} return values, got {len(res)} in {self.name}"
                 )
             return {k: v for k, v in zip(self.output, res)}
         elif len(self.output) == 1:
@@ -98,8 +166,17 @@ class FuncEdge(Edge):
 
     @property
     def inverse(self) -> "FuncEdge":
+
+        if self.inverse_func is None:
+            raise RuntimeError("Trying to invert a non-invertable edge")
+
         return FuncEdge.from_func(
-            self.name + "_r", self.inverse_func, self.output, self.input, self.func
+            self.name + "_r",
+            self.inverse_func,
+            self.output,
+            self.input,
+            self.weight,
+            self.func,
         )
 
 
@@ -125,63 +202,129 @@ class TransformEdge(Edge):
 
     @property
     def inverse(self) -> "TransformEdge":
+        if self.transform is None:
+            raise RuntimeError("Trying to invert a non-invertable edge")
+
         if isinstance(self.transform, Callable):
             return TransformEdge(
                 self.name + "_r",
                 self.output,
                 self.input,
+                self.weight,
                 True,
                 lambda: self.transform().inverted(),
             )
 
         return TransformEdge(
-            self.name + "_r", self.output, self.input, True, self.transform.inverted()
+            self.name + "_r",
+            self.output,
+            self.input,
+            self.weight,
+            True,
+            self.transform.inverted(),
         )
 
 
 class Graph:
     def __init__(self, edges: Sequence[Edge]):
         self._edges = edges
-        # TODO: precompute some internal representation?
-        #   - Nodes between edges, potentially in discrete subgraphs
-        #   - Inversions are not included right now
+
+        self._subgraphs: list[tuple[set[str], list[Edge]]] = []
+        for edge in self._edges:
+            keys = set(edge.input) | set(edge.output)
+
+            overlapping = []
+
+            for n, (sub_keys, sub_edges) in enumerate(self._subgraphs):
+                if keys & sub_keys:
+                    overlapping.append(n)
+
+            if not overlapping:
+                self._subgraphs.append((keys, [edge]))
+            elif len(overlapping) == 1:
+                s = self._subgraphs[overlapping[0]][0]
+                s |= keys
+                self._subgraphs[overlapping[0]][1].append(edge)
+            else:
+                edges_combined = []
+                for n in overlapping:
+                    keys |= self._subgraphs[n][0]
+                    edges_combined.extend(self._subgraphs[n][1])
+                for n in overlapping[::-1]:
+                    self._subgraphs.pop(n)
+                self._subgraphs.append((keys, edges_combined))
 
     def evaluator(self, input: dict[str, Desc], output: dict[str, Desc]) -> Edge:
-        # May wish to solve for each output independently
-        # Probably can be smarter here and prune more effectively.
-        q: list[tuple[dict[str, Desc], tuple[Edge, ...]]] = [(input, ())]
+        out_edges = []
+        for sub_keys, sub_edges in self._subgraphs:
+            if not (sub_keys & set(output) or sub_keys & set(input)):
+                continue
+            output_subset = {k: v for k, v in output.items() if k in sub_keys}
+            sub_edges = sorted(sub_edges, key=lambda x: x.weight)
 
-        def trace(x: dict[str, Desc]) -> tuple[tuple[str, str], ...]:
-            return tuple(sorted([(k, v.coordinates) for k, v in x.items()]))
+            @dataclass(order=True)
+            class Node:
+                weight: float
+                desc: dict[str, Desc]
+                prev_node: Node | None = None
+                edge: Edge | None = None
 
-        explored: set[tuple[tuple[str, str], ...]] = set()
-        explored.add(trace(input))
-        edges = ()
-        while q:
-            v, edges = q.pop()
-            if Desc.compatible(v, output):
-                break
-            for e in self._edges:
-                if Desc.compatible(v, e.input):
-                    w = (v | e.output, (*edges, e))
-                    w_trace = trace(w[0])
-                    if w_trace in explored:
-                        # This may need to be more explicitly checked...
-                        # May not accurately be checking what we consider "in"
-                        continue
-                    explored.add(w_trace)
-                    q.append(w)
-        else:
-            # TODO: case where non-linear solving is needed
-            raise NotImplementedError(
-                "This may be possible, but is not a simple case already considered"
-            )
-        if len(edges) == 0:
+            q: PriorityQueue[Node] = PriorityQueue()
+            q.put(Node(0, input))
+
+            best: Node = Node(np.inf, {})
+            while not q.empty():
+                n = q.get()
+                if n.weight > best.weight:
+                    continue
+                if Desc.compatible(n.desc, output_subset):
+                    if n.weight < best.weight:
+                        best = n
+                    continue
+                for e in sub_edges:
+                    if Desc.compatible(n.desc, e.input):
+                        d = n.desc | e.output
+                        w = n.weight + e.weight
+
+                        q.put(Node(w, d, n, e))
+            if np.isinf(best.weight):
+                # TODO: case where non-linear solving is needed
+                # this plotting is in here for debugging purposes, it should be removed at some point
+                import matplotlib.pyplot as plt
+
+                self.visualize(input)
+                plt.show()
+                raise NotImplementedError(
+                    "This may be possible, but is not a simple case already considered"
+                )
+
+            edges = []
+            n = best
+            while n.prev_node is not None:
+                edges.insert(0, n.edge)
+                n = n.prev_node
+            if len(edges) == 0:
+                continue
+            elif len(edges) == 1:
+                out_edges.append(edges[0])
+            else:
+                out_edges.append(SequenceEdge.from_edges("eval", edges, output_subset))
+
+        found_outputs = set()
+        for out in out_edges:
+            found_outputs |= set(out.output)
+        if missing := set(output) - found_outputs:
+            import matplotlib.pyplot as plt
+
+            self.visualize(input)
+            plt.show()
+            raise RuntimeError(f"Could not find path to resolve all outputs: {missing}")
+
+        if len(out_edges) == 0:
             return Edge("noop", input, output)
-        elif len(edges) == 1:
-            return edges[0]
-        else:
-            return SequenceEdge.from_edges("eval", edges, output)
+        if len(out_edges) == 1:
+            return out_edges[0]
+        return SequenceEdge.from_edges("eval", out_edges, output)
 
     def visualize(self, input: dict[str, Desc] | None = None):
         import networkx as nx
@@ -194,32 +337,42 @@ class Graph:
         G = nx.DiGraph()
 
         if input is not None:
-            q: list[dict[str, Desc]] = [input]
-            explored: set[tuple[tuple[str, str], ...]] = set()
-            explored.add(tuple(sorted(((k, v.coordinates) for k, v in q[0].items()))))
-            G.add_node(node_format(q[0]))
-            while q:
-                n = q.pop()
-                for e in self._edges:
-                    if Desc.compatible(n, e.input):
-                        w = n | e.output
-                        if node_format(w) not in G:
-                            G.add_node(node_format(w))
-                            explored.add(
-                                tuple(
-                                    sorted(((k, v.coordinates) for k, v in w.items()))
+
+            for _, edges in self._subgraphs:
+                q: list[dict[str, Desc]] = [input]
+                explored: set[tuple[tuple[str, str], ...]] = set()
+                explored.add(
+                    tuple(sorted(((k, v.coordinates) for k, v in q[0].items())))
+                )
+                G.add_node(node_format(q[0]))
+                while q:
+                    n = q.pop()
+                    for e in edges:
+                        if Desc.compatible(n, e.input):
+                            w = n | e.output
+                            if node_format(w) not in G:
+                                G.add_node(node_format(w))
+                                explored.add(
+                                    tuple(
+                                        sorted(
+                                            ((k, v.coordinates) for k, v in w.items())
+                                        )
+                                    )
                                 )
-                            )
-                            q.append(w)
-                        if node_format(w) != node_format(n):
-                            G.add_edge(node_format(n), node_format(w), name=e.name)
+                                q.append(w)
+                            if node_format(w) != node_format(n):
+                                G.add_edge(node_format(n), node_format(w), name=e.name)
         else:
+            # don't bother separating subgraphs,as the end result is exactly the same here
             for edge in self._edges:
                 G.add_edge(
                     node_format(edge.input), node_format(edge.output), name=edge.name
                 )
 
-        pos = nx.planar_layout(G)
+        try:
+            pos = nx.planar_layout(G)
+        except Exception:
+            pos = nx.circular_layout(G)
         plt.figure()
         nx.draw(G, pos=pos, with_labels=True)
         nx.draw_networkx_edge_labels(G, pos=pos)
