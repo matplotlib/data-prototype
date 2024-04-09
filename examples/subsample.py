@@ -21,7 +21,7 @@ from matplotlib.colors import Normalize
 import numpy as np
 
 from data_prototype.description import Desc, desc_like
-from data_prototype.wrappers import ImageWrapper
+from data_prototype.artist import Image, CompatibilityArtist as CA
 
 from skimage.transform import downscale_local_mean
 
@@ -74,10 +74,10 @@ class Subsample:
 sub = Subsample()
 cmap = mpl.colormaps["coolwarm"]
 norm = Normalize(-2.2, 2.2)
-im = ImageWrapper(sub, cmap=cmap, norm=norm)
+im = Image(sub, cmap=cmap, norm=norm)
 
 fig, ax = plt.subplots()
-ax.add_artist(im)
+ax.add_artist(CA(im))
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
 plt.show()
