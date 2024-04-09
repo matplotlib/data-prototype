@@ -30,22 +30,22 @@ line_edges = [
     FuncEdge.from_func(
         "lw",
         lambda lw: min(1 + lw, 5),
-        {"lw": Desc((), str, "auto")},
-        {"linewidth": Desc((), str, "display")},
+        {"lw": Desc((), "auto")},
+        {"linewidth": Desc((), "display")},
     ),
     # Probably should separate out norm/cmap step
     # Slight lie about color being a string here, because of limitations in impl
     FuncEdge.from_func(
         "cmap",
         lambda j: cmap(norm(j)),
-        {"j": Desc((), str, "auto")},
-        {"color": Desc((), str, "display")},
+        {"j": Desc((), "auto")},
+        {"color": Desc((), "display")},
     ),
     FuncEdge.from_func(
         "ls",
         lambda cat: {"A": "-", "B": ":", "C": "--"}[cat],
-        {"cat": Desc((), str, "auto")},
-        {"linestyle": Desc((), str, "display")},
+        {"cat": Desc((), "auto")},
+        {"linestyle": Desc((), "display")},
     ),
 ]
 

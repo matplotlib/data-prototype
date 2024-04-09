@@ -32,13 +32,13 @@ class Lissajous:
 
     def describe(self):
         return {
-            "x": Desc([self.N], float),
-            "y": Desc([self.N], float),
-            "time": Desc([], float),
-            "sizes": Desc([], float),
-            "paths": Desc([], float),
-            "edgecolors": Desc([], str),
-            "facecolors": Desc([self.N], str),
+            "x": Desc((self.N,)),
+            "y": Desc((self.N,)),
+            "time": Desc(()),
+            "sizes": Desc(()),
+            "paths": Desc(()),
+            "edgecolors": Desc(()),
+            "facecolors": Desc((self.N,)),
         }
 
     def query(

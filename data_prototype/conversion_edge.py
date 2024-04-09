@@ -83,8 +83,7 @@ class CoordinateEdge(Edge):
         # supply only the input/output coordinates for many things
         # could also see lowering default weight for this edge, but just defaulting everything to 1 for now
         inp = {
-            k: v if isinstance(v, Desc) else Desc(("N",), np.dtype("f8"), v)
-            for k, v in input.items()
+            k: v if isinstance(v, Desc) else Desc(("N",), v) for k, v in input.items()
         }
         outp = {k: desc_like(v, coordinates=output) for k, v in inp.items()}
 
@@ -139,9 +138,9 @@ class FuncEdge(Edge):
             import inspect
 
             input_vars = inspect.signature(func).parameters.keys()
-            input = {k: Desc(("N",), np.dtype("f8"), input) for k in input_vars}
+            input = {k: Desc(("N",), input) for k in input_vars}
         if isinstance(output, str):
-            output = {k: Desc(("N",), np.dtype("f8"), output) for k in input.keys()}
+            output = {k: Desc(("N",), output) for k in input.keys()}
 
         return cls(name, input, output, weight, inverse is not None, func, inverse)
 

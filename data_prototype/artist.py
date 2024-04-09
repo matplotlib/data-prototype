@@ -1,7 +1,5 @@
 from typing import Sequence
 
-import numpy as np
-
 from .containers import DataContainer, ArrayContainer, DataUnion
 from .description import Desc, desc_like
 from .conversion_edge import Edge, TransformEdge
@@ -73,7 +71,7 @@ class CompatibilityArtist:
             edges = []
 
         if self.axes is not None:
-            desc: Desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+            desc: Desc = Desc(("N",), coordinates="data")
             xy: dict[str, Desc] = {"x": desc, "y": desc}
             edges.append(
                 TransformEdge(

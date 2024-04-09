@@ -23,7 +23,8 @@ from data_prototype.description import Desc
 from data_prototype.conversion_node import FunctionConversionNode
 
 from data_prototype.wrappers import FormattedText
-from data_prototype.artist import Line, CompatibilityArtist as CA
+from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.line import Line
 
 
 class SinOfTime:
@@ -33,10 +34,10 @@ class SinOfTime:
 
     def describe(self):
         return {
-            "x": Desc([self.N], float),
-            "y": Desc([self.N], float),
-            "phase": Desc([], float),
-            "time": Desc([], float),
+            "x": Desc((self.N,)),
+            "y": Desc((self.N,)),
+            "phase": Desc(()),
+            "time": Desc(()),
         }
 
     def query(

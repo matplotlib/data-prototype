@@ -128,8 +128,8 @@ lw = Line(
         FuncEdge.from_func(
             "color",
             lambda color: cmap((color / (2 * np.pi)) % 1),
-            {"color": Desc((1,), np.float64)},
-            {"color": Desc((), np.float64, "display")},
+            {"color": Desc((1,))},
+            {"color": Desc((), "display")},
         )
     ],
     linewidth=5.0,

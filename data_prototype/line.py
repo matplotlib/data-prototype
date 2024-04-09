@@ -16,44 +16,34 @@ class Line(Artist):
     def __init__(self, container, edges=None, **kwargs):
         super().__init__(container, edges, **kwargs)
 
-        colordesc = Desc((), str, "display")  # ... this needs thinking...
-        floatdesc = Desc((), float, "display")
-        strdesc = Desc((), str, "display")
+        scalar = Desc((), "display")  # ... this needs thinking...
 
         self._edges += [
             CoordinateEdge.from_coords("xycoords", {"x": "auto", "y": "auto"}, "data"),
-            CoordinateEdge.from_coords("color", {"color": Desc((), str)}, "display"),
+            CoordinateEdge.from_coords("color", {"color": Desc(())}, "display"),
+            CoordinateEdge.from_coords("linewidth", {"linewidth": Desc(())}, "display"),
+            CoordinateEdge.from_coords("linestyle", {"linestyle": Desc(())}, "display"),
             CoordinateEdge.from_coords(
-                "linewidth", {"linewidth": Desc((), np.dtype("f8"))}, "display"
-            ),
-            CoordinateEdge.from_coords(
-                "linestyle", {"linestyle": Desc((), str)}, "display"
-            ),
-            CoordinateEdge.from_coords(
-                "markeredgecolor", {"markeredgecolor": Desc((), str)}, "display"
+                "markeredgecolor", {"markeredgecolor": Desc(())}, "display"
             ),
             CoordinateEdge.from_coords(
-                "markerfacecolor", {"markerfacecolor": Desc((), str)}, "display"
+                "markerfacecolor", {"markerfacecolor": Desc(())}, "display"
             ),
             CoordinateEdge.from_coords(
-                "markersize", {"markersize": Desc((), float)}, "display"
+                "markersize", {"markersize": Desc(())}, "display"
             ),
             CoordinateEdge.from_coords(
-                "markeredgewidth", {"markeredgewidth": Desc((), float)}, "display"
+                "markeredgewidth", {"markeredgewidth": Desc(())}, "display"
             ),
-            CoordinateEdge.from_coords("marker", {"marker": Desc((), str)}, "display"),
-            DefaultEdge.from_default_value("color_def", "color", colordesc, "C0"),
-            DefaultEdge.from_default_value("linewidth_def", "linewidth", floatdesc, 1),
-            DefaultEdge.from_default_value("linestyle_def", "linestyle", strdesc, "-"),
-            DefaultEdge.from_default_value(
-                "mec_def", "markeredgecolor", colordesc, "C0"
-            ),
-            DefaultEdge.from_default_value(
-                "mfc_def", "markerfacecolor", colordesc, "C0"
-            ),
-            DefaultEdge.from_default_value("ms_def", "markersize", floatdesc, 6),
-            DefaultEdge.from_default_value("mew_def", "markeredgewidth", floatdesc, 1),
-            DefaultEdge.from_default_value("marker_def", "marker", strdesc, "None"),
+            CoordinateEdge.from_coords("marker", {"marker": Desc(())}, "display"),
+            DefaultEdge.from_default_value("color_def", "color", scalar, "C0"),
+            DefaultEdge.from_default_value("linewidth_def", "linewidth", scalar, 1),
+            DefaultEdge.from_default_value("linestyle_def", "linestyle", scalar, "-"),
+            DefaultEdge.from_default_value("mec_def", "markeredgecolor", scalar, "C0"),
+            DefaultEdge.from_default_value("mfc_def", "markerfacecolor", scalar, "C0"),
+            DefaultEdge.from_default_value("ms_def", "markersize", scalar, 6),
+            DefaultEdge.from_default_value("mew_def", "markeredgewidth", scalar, 1),
+            DefaultEdge.from_default_value("marker_def", "marker", scalar, "None"),
         ]
         # Currently ignoring:
         # - cap/join style
@@ -70,22 +60,20 @@ class Line(Artist):
 
     def draw(self, renderer, edges: Sequence[Edge]) -> None:
         g = Graph(list(edges) + self._edges)
-        desc = Desc(("N",), np.dtype("f8"), "display")
-        colordesc = Desc((), str, "display")  # ... this needs thinking...
-        floatdesc = Desc((), float, "display")
-        strdesc = Desc((), str, "display")
+        desc = Desc(("N",), "display")
+        scalar = Desc((), "display")  # ... this needs thinking...
 
         require = {
             "x": desc,
             "y": desc,
-            "color": colordesc,
-            "linewidth": floatdesc,
-            "linestyle": strdesc,
-            "markeredgecolor": colordesc,
-            "markerfacecolor": colordesc,
-            "markersize": floatdesc,
-            "markeredgewidth": floatdesc,
-            "marker": strdesc,
+            "color": scalar,
+            "linewidth": scalar,
+            "linestyle": scalar,
+            "markeredgecolor": scalar,
+            "markerfacecolor": scalar,
+            "markersize": scalar,
+            "markeredgewidth": scalar,
+            "marker": scalar,
         }
 
         conv = g.evaluator(self._container.describe(), require)

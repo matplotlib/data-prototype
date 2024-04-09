@@ -1,9 +1,7 @@
 from typing import Sequence
 
 import matplotlib.cm as mcm
-import matplotlib.colors as mcolors
 import matplotlib.transforms as mtransforms
-import numpy as np
 
 from .artist import Artist
 from .description import Desc, desc_like
@@ -14,21 +12,15 @@ class Image(Artist):
     def __init__(self, container, edges=None, **kwargs):
         super().__init__(container, edges, **kwargs)
 
-        strdesc = Desc((), str)
-        arrdesc = Desc(("M", "N"), np.float64)
-        normdesc = Desc((), mcolors.Normalize, "norm")
-        cmapdesc = Desc((), mcolors.Colormap, "cmap")
+        strdesc = Desc(())
+        arrdesc = Desc(("M", "N"))
+        normdesc = Desc((), "norm")
+        cmapdesc = Desc((), "cmap")
 
         self._edges += [
-            CoordinateEdge.from_coords(
-                "A_pcolor", {"A": Desc(("M", "N"), np.float64)}, "data"
-            ),
-            CoordinateEdge.from_coords(
-                "A_rgb", {"A": Desc(("M", "N", 3), np.float64)}, "rgb"
-            ),
-            CoordinateEdge.from_coords(
-                "A_rgba", {"A": Desc(("M", "N", 4), np.float64)}, "rgba"
-            ),
+            CoordinateEdge.from_coords("A_pcolor", {"A": Desc(("M", "N"))}, "data"),
+            CoordinateEdge.from_coords("A_rgb", {"A": Desc(("M", "N", 3))}, "rgb"),
+            CoordinateEdge.from_coords("A_rgba", {"A": Desc(("M", "N", 4))}, "rgba"),
             FuncEdge.from_func(
                 "norm_obj",
                 lambda norm: mcm._auto_norm_from_scale(norm),
@@ -51,12 +43,12 @@ class Image(Artist):
                 "A_cmap",
                 lambda A, cmap: cmap(A),
                 {"A": desc_like(arrdesc, coordinates="norm"), "cmap": cmapdesc},
-                {"A": Desc(("M", "N", 4), np.float64, coordinates="rgba")},
+                {"A": Desc(("M", "N", 4), coordinates="rgba")},
             ),
             DefaultEdge.from_default_value("cmap_def", "cmap", strdesc, "viridis"),
             DefaultEdge.from_default_value("norm_def", "norm", strdesc, "linear"),
             CoordinateEdge.from_coords(
-                "A_rgba", {"A": Desc(("M", "N", 4), np.float64, "rgba")}, "display"
+                "A_rgba", {"A": Desc(("M", "N", 4), "rgba")}, "display"
             ),
         ]
 
@@ -68,7 +60,7 @@ class Image(Artist):
         plt.show()
         conv = g.evaluator(
             self._container.describe(),
-            {"A": Desc(("M", "N", 4), np.float64, "display")},
+            {"A": Desc(("M", "N", 4), "display")},
         )
         query, _ = self._container.query(g)
         image = conv.evaluate(query)["A"]

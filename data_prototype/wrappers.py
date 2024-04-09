@@ -132,7 +132,7 @@ class ProxyWrapperBase:
 
         # actually query the underlying data.  This returns both the (raw) data
         # and key to use for caching.
-        desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+        desc = Desc(("N",), coordinates="data")
         xy = {"x": desc, "y": desc}
         edges = [
             TransformEdge(

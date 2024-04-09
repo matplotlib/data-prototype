@@ -21,7 +21,8 @@ from matplotlib.colors import Normalize
 import numpy as np
 
 from data_prototype.description import Desc, desc_like
-from data_prototype.artist import Image, CompatibilityArtist as CA
+from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.image import Image
 
 from skimage.transform import downscale_local_mean
 
@@ -38,9 +39,9 @@ Z += np.random.random(Z.shape) - 0.5
 class Subsample:
     def describe(self):
         return {
-            "xextent": Desc([2], float),
-            "yextent": Desc([2], float),
-            "image": Desc([], float),
+            "xextent": Desc((2,)),
+            "yextent": Desc((2,)),
+            "image": Desc(("M", "N")),
         }
 
     def query(
@@ -48,7 +49,7 @@ class Subsample:
         graph,
         parent_coordinates="axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+        desc = Desc(("N",), coordinates="data")
         xy = {"x": desc, "y": desc}
         data_lim = graph.evaluator(xy, desc_like(xy, coordinates="axes")).inverse
 
