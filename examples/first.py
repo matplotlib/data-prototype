@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from data_prototype.artist import CompatibilityArtist
+from data_prototype.artist import CompatibilityAxes
 from data_prototype.line import Line
 from data_prototype.containers import FuncContainer, SeriesContainer
 
@@ -30,9 +30,11 @@ lw2 = Line(
     markersize=12,
 )
 
-fig, ax = plt.subplots()
-ax.add_artist(CompatibilityArtist(lw))
-ax.add_artist(CompatibilityArtist(lw2))
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
+ax.add_artist(lw)
+ax.add_artist(lw2)
 ax.set_xlim(0, np.pi * 4)
 ax.set_ylim(-1.1, 1.1)
 
