@@ -225,8 +225,11 @@ class TransformEdge(Edge):
 
 
 class Graph:
-    def __init__(self, edges: Sequence[Edge]):
-        self._edges = edges
+    def __init__(
+        self, edges: Sequence[Edge], aliases: tuple[tuple[str, str], ...] = ()
+    ):
+        self._edges = tuple(edges)
+        self._aliases = aliases
 
         self._subgraphs: list[tuple[set[str], list[Edge]]] = []
         for edge in self._edges:
@@ -245,7 +248,7 @@ class Graph:
                 s |= keys
                 self._subgraphs[overlapping[0]][1].append(edge)
             else:
-                edges_combined = []
+                edges_combined = [edge]
                 for n in overlapping:
                     keys |= self._subgraphs[n][0]
                     edges_combined.extend(self._subgraphs[n][1])
@@ -253,20 +256,44 @@ class Graph:
                     self._subgraphs.pop(n)
                 self._subgraphs.append((keys, edges_combined))
 
+    def _resolve_alias(self, coord: str) -> str:
+        while True:
+            for coa, cob in self._aliases:
+                if coord == coa:
+                    coord = cob
+                    break
+            else:
+                break
+        return coord
+
     def evaluator(self, input: dict[str, Desc], output: dict[str, Desc]) -> Edge:
         out_edges = []
+
         for sub_keys, sub_edges in self._subgraphs:
             if not (sub_keys & set(output) or sub_keys & set(input)):
                 continue
+
             output_subset = {k: v for k, v in output.items() if k in sub_keys}
             sub_edges = sorted(sub_edges, key=lambda x: x.weight)
 
-            @dataclass(order=True)
+            @dataclass
             class Node:
                 weight: float
                 desc: dict[str, Desc]
                 prev_node: Node | None = None
                 edge: Edge | None = None
+
+                def __le__(self, other):
+                    return self.weight <= other.weight
+
+                def __lt__(self, other):
+                    return self.weight < other.weight
+
+                def __ge__(self, other):
+                    return self.weight >= other.weight
+
+                def __gt__(self, other):
+                    return self.weight > other.weight
 
             q: PriorityQueue[Node] = PriorityQueue()
             q.put(Node(0, input))
@@ -276,12 +303,12 @@ class Graph:
                 n = q.get()
                 if n.weight > best.weight:
                     continue
-                if Desc.compatible(n.desc, output_subset):
+                if Desc.compatible(n.desc, output_subset, aliases=self._aliases):
                     if n.weight < best.weight:
                         best = n
                     continue
                 for e in sub_edges:
-                    if Desc.compatible(n.desc, e.input):
+                    if Desc.compatible(n.desc, e.input, aliases=self._aliases):
                         d = n.desc | e.output
                         w = n.weight + e.weight
 
@@ -328,6 +355,7 @@ class Graph:
     def visualize(self, input: dict[str, Desc] | None = None):
         import networkx as nx
         import matplotlib.pyplot as plt
+
         from pprint import pformat
 
         def node_format(x):
@@ -376,3 +404,9 @@ class Graph:
         nx.draw(G, pos=pos, with_labels=True)
         nx.draw_networkx_edge_labels(G, pos=pos)
         # plt.show()
+
+    def __add__(self, other: Graph) -> Graph:
+        aself = {k: v for k, v in self._aliases}
+        aother = {k: v for k, v in other._aliases}
+        aliases = tuple((aself | aother).items())
+        return Graph(self._edges + other._edges, aliases)

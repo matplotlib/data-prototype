@@ -1,5 +1,3 @@
-from typing import Sequence
-
 import matplotlib.path as mpath
 import matplotlib.colors as mcolors
 import matplotlib.lines as mlines
@@ -9,7 +7,7 @@ import numpy as np
 
 from .artist import Artist
 from .description import Desc
-from .conversion_edge import Edge, Graph, CoordinateEdge, DefaultEdge
+from .conversion_edge import Graph, CoordinateEdge, DefaultEdge
 
 
 class Line(Artist):
@@ -18,7 +16,7 @@ class Line(Artist):
 
         scalar = Desc((), "display")  # ... this needs thinking...
 
-        self._edges += [
+        edges = [
             CoordinateEdge.from_coords("xycoords", {"x": "auto", "y": "auto"}, "data"),
             CoordinateEdge.from_coords("color", {"color": Desc(())}, "display"),
             CoordinateEdge.from_coords("linewidth", {"linewidth": Desc(())}, "display"),
@@ -45,6 +43,7 @@ class Line(Artist):
             DefaultEdge.from_default_value("mew_def", "markeredgewidth", scalar, 1),
             DefaultEdge.from_default_value("marker_def", "marker", scalar, "None"),
         ]
+        self._graph = self._graph + Graph(edges)
         # Currently ignoring:
         # - cap/join style
         # - url
@@ -58,8 +57,10 @@ class Line(Artist):
         # - non-str markers
         # Each individually pretty easy, but relatively rare features, focusing on common cases
 
-    def draw(self, renderer, edges: Sequence[Edge]) -> None:
-        g = Graph(list(edges) + self._edges)
+    def draw(self, renderer, graph: Graph) -> None:
+        if not self.get_visible():
+            return
+        g = graph + self._graph
         desc = Desc(("N",), "display")
         scalar = Desc((), "display")  # ... this needs thinking...
 
@@ -81,10 +82,20 @@ class Line(Artist):
         x, y, color, lw, ls, *marker = conv.evaluate(query).values()
         mec, mfc, ms, mew, mark = marker
 
+        clip_conv = g.evaluator(
+            self._clip_box.describe(),
+            {"x": Desc(("N",), "display"), "y": Desc(("N",), "display")},
+        )
+        clip_query, _ = self._clip_box.query(g)
+        clipx, clipy = clip_conv.evaluate(clip_query).values()
+
         # make the Path object
         path = mpath.Path(np.vstack([x, y]).T)
         # make an configure the graphic context
         gc = renderer.new_gc()
+        gc.set_clip_rectangle(
+            mtransforms.Bbox.from_extents(clipx[0], clipy[0], clipx[1], clipy[1])
+        )
         gc.set_foreground(color)
         gc.set_linewidth(lw)
         gc.set_dashes(*mlines._scale_dashes(*mlines._get_dash_pattern(ls), lw))
@@ -93,6 +104,9 @@ class Line(Artist):
 
         if mark != "None" and ms > 0:
             gc = renderer.new_gc()
+            gc.set_clip_rectangle(
+                mtransforms.Bbox.from_extents(clipx[0], clipy[0], clipx[1], clipy[1])
+            )
             gc.set_linewidth(mew)
             gc.set_foreground(mec)
             marker_ = mmarkers.MarkerStyle(mark)

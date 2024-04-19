@@ -47,18 +47,15 @@ class SinOfTime:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         th = np.linspace(0, 2 * np.pi, self.N)
 
-        def next_time():
-            cur_time = time.time()
+        cur_time = time.time()
 
-            phase = 2 * np.pi * (self.scale * cur_time % 60) / 60
-            return {
-                "x": th,
-                "y": np.sin(th + phase),
-                "phase": phase,
-                "time": cur_time,
-            }, hash(cur_time)
-
-        return next_time()
+        phase = 2 * np.pi * (self.scale * cur_time % 60) / 60
+        return {
+            "x": th,
+            "y": np.sin(th + phase),
+            "phase": phase,
+            "time": cur_time,
+        }, hash(cur_time)
 
 
 def update(frame, art):

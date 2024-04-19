@@ -103,17 +103,32 @@ class Desc:
         return None
 
     @staticmethod
-    def compatible(a: dict[str, "Desc"], b: dict[str, "Desc"]) -> bool:
+    def compatible(
+        a: dict[str, "Desc"],
+        b: dict[str, "Desc"],
+        aliases: tuple[tuple[str, str], ...] = (),
+    ) -> bool:
         """Determine if ``a`` is a valid input for ``b``.
 
         Note: ``a`` _may_ have additional keys.
         """
+
+        def resolve_aliases(coord):
+            while True:
+                for coa, cob in aliases:
+                    if coord == coa:
+                        coord = cob
+                        break
+                else:
+                    break
+            return coord
+
         try:
             Desc.validate_shapes(b, a)
         except (KeyError, ValueError):
             return False
         for k, v in b.items():
-            if a[k].coordinates != v.coordinates:
+            if resolve_aliases(a[k].coordinates) != resolve_aliases(v.coordinates):
                 return False
         return True
 

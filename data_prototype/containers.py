@@ -82,11 +82,16 @@ class NoNewKeys(ValueError): ...
 
 
 class ArrayContainer:
-    def __init__(self, **data):
+    def __init__(self, coordinates: dict[str, str] | None = None, /, **data):
+        coordinates = coordinates or {}
         self._data = data
         self._cache_key = str(uuid.uuid4())
         self._desc = {
-            k: (Desc(v.shape) if isinstance(v, np.ndarray) else Desc(()))
+            k: (
+                Desc(v.shape, coordinates.get(k, "auto"))
+                if isinstance(v, np.ndarray)
+                else Desc(())
+            )
             for k, v in data.items()
         }
 

@@ -23,6 +23,7 @@ import numpy as np
 from data_prototype.description import Desc, desc_like
 from data_prototype.artist import CompatibilityArtist as CA
 from data_prototype.image import Image
+from data_prototype.containers import ArrayContainer
 
 from skimage.transform import downscale_local_mean
 
@@ -39,8 +40,8 @@ Z += np.random.random(Z.shape) - 0.5
 class Subsample:
     def describe(self):
         return {
-            "xextent": Desc((2,)),
-            "yextent": Desc((2,)),
+            "x": Desc((2,)),
+            "y": Desc((2,)),
             "image": Desc(("M", "N")),
         }
 
@@ -66,11 +67,13 @@ class Subsample:
         yscale = int(np.ceil((yi2 - yi1) / 50))
 
         return {
-            "xextent": [x1, x2],
-            "yextent": [y1, y2],
+            "x": [x1, x2],
+            "y": [y1, y2],
             "image": downscale_local_mean(Z[xi1:xi2, yi1:yi2], (xscale, yscale)),
         }, hash((x1, x2, y1, y2))
 
+
+non_sub = ArrayContainer(**{"image": Z, "x": np.array([0, 1]), "y": np.array([0, 10])})
 
 sub = Subsample()
 cmap = mpl.colormaps["coolwarm"]

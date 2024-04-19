@@ -1,8 +1,11 @@
+from bisect import insort
 from typing import Sequence
+
+import numpy as np
 
 from .containers import DataContainer, ArrayContainer, DataUnion
 from .description import Desc, desc_like
-from .conversion_edge import Edge, TransformEdge
+from .conversion_edge import Edge, Graph, TransformEdge
 
 
 class Artist:
@@ -16,10 +19,27 @@ class Artist:
         self._container = DataUnion(container, kwargs_cont)
 
         edges = edges or []
-        self._edges = list(edges)
+        self._visible = True
+        self._graph = Graph(edges)
+        self._clip_box: DataContainer = ArrayContainer(
+            {"x": "parent", "y": "parent"},
+            **{"x": np.asarray([0, 1]), "y": np.asarray([0, 1])}
+        )
 
-    def draw(self, renderer, edges: Sequence[Edge]) -> None:
+    def draw(self, renderer, graph: Graph) -> None:
         return
+
+    def set_clip_box(self, container: DataContainer) -> None:
+        self._clip_box = container
+
+    def get_clip_box(self, container: DataContainer) -> DataContainer:
+        return self._clip_box
+
+    def get_visible(self):
+        return self._visible
+
+    def set_visible(self, visible):
+        self._visible = visible
 
 
 class CompatibilityArtist:
@@ -42,10 +62,44 @@ class CompatibilityArtist:
     def __init__(self, artist: Artist):
         self._artist = artist
 
-        self.axes = None
+        self._axes = None
         self.figure = None
         self._clippath = None
+        self._visible = True
         self.zorder = 2
+        self._graph = Graph([])
+
+    @property
+    def axes(self):
+        return self._axes
+
+    @axes.setter
+    def axes(self, ax):
+        self._axes = ax
+
+        if self._axes is None:
+            self._graph = Graph([])
+            return
+
+        desc: Desc = Desc(("N",), coordinates="data")
+        xy: dict[str, Desc] = {"x": desc, "y": desc}
+        self._graph = Graph(
+            [
+                TransformEdge(
+                    "data",
+                    xy,
+                    desc_like(xy, coordinates="axes"),
+                    transform=self._axes.transData - self._axes.transAxes,
+                ),
+                TransformEdge(
+                    "axes",
+                    desc_like(xy, coordinates="axes"),
+                    desc_like(xy, coordinates="display"),
+                    transform=self._axes.transAxes,
+                ),
+            ],
+            aliases=(("parent", "axes"),),
+        )
 
     def set_figure(self, fig):
         self.figure = fig
@@ -65,32 +119,19 @@ class CompatibilityArtist:
     def get_animated(self):
         return False
 
-    def draw(self, renderer, edges=None):
+    def get_visible(self):
+        return self._visible
 
-        if edges is None:
-            edges = []
+    def set_visible(self, visible):
+        self._visible = visible
 
-        if self.axes is not None:
-            desc: Desc = Desc(("N",), coordinates="data")
-            xy: dict[str, Desc] = {"x": desc, "y": desc}
-            edges.append(
-                TransformEdge(
-                    "data",
-                    xy,
-                    desc_like(xy, coordinates="axes"),
-                    transform=self.axes.transData - self.axes.transAxes,
-                )
-            )
-            edges.append(
-                TransformEdge(
-                    "axes",
-                    desc_like(xy, coordinates="axes"),
-                    desc_like(xy, coordinates="display"),
-                    transform=self.axes.transAxes,
-                )
-            )
+    def draw(self, renderer, graph=None):
+        if not self.get_visible():
+            return
 
-        self._artist.draw(renderer, edges)
+        if graph is None:
+            graph = Graph([])
+        self._artist.draw(renderer, graph + self._graph)
 
 
 class CompatibilityAxes:
@@ -111,11 +152,44 @@ class CompatibilityAxes:
     """
 
     def __init__(self, axes):
-        self.axes = axes
+        self._axes = axes
         self.figure = None
         self._clippath = None
+        self._visible = True
         self.zorder = 2
-        self._children = []
+        self._children: list[tuple[float, Artist]] = []
+
+    @property
+    def axes(self):
+        return self._axes
+
+    @axes.setter
+    def axes(self, ax):
+        self._axes = ax
+
+        if self._axes is None:
+            self._graph = Graph([])
+            return
+
+        desc: Desc = Desc(("N",), coordinates="data")
+        xy: dict[str, Desc] = {"x": desc, "y": desc}
+        self._graph = Graph(
+            [
+                TransformEdge(
+                    "data",
+                    xy,
+                    desc_like(xy, coordinates="axes"),
+                    transform=self._axes.transData - self._axes.transAxes,
+                ),
+                TransformEdge(
+                    "axes",
+                    desc_like(xy, coordinates="axes"),
+                    desc_like(xy, coordinates="display"),
+                    transform=self._axes.transAxes,
+                ),
+            ],
+            aliases=(("parent", "axes"),),
+        )
 
     def set_figure(self, fig):
         self.figure = fig
@@ -135,39 +209,28 @@ class CompatibilityAxes:
     def get_animated(self):
         return False
 
-    def draw(self, renderer, edges=None):
-        if edges is None:
-            edges = []
+    def draw(self, renderer, graph=None):
+        if not self.visible:
+            return
+        if graph is None:
+            graph = Graph([])
 
-        if self.axes is not None:
-            desc: Desc = Desc(("N",), coordinates="data")
-            xy: dict[str, Desc] = {"x": desc, "y": desc}
-            edges.append(
-                TransformEdge(
-                    "data",
-                    xy,
-                    desc_like(xy, coordinates="axes"),
-                    transform=self.axes.transData - self.axes.transAxes,
-                )
-            )
-            edges.append(
-                TransformEdge(
-                    "axes",
-                    desc_like(xy, coordinates="axes"),
-                    desc_like(xy, coordinates="display"),
-                    transform=self.axes.transAxes,
-                )
-            )
+        graph = graph + self._graph
 
-        # TODO independent zorder
-        for c in self._children:
-            c.draw(renderer, edges)
+        for _, c in self._children:
+            c.draw(renderer, graph)
 
-    def add_artist(self, artist):
-        self._children.append(artist)
+    def add_artist(self, artist, zorder=1):
+        insort(self._children, (zorder, artist), key=lambda x: x[0])
 
     def set_xlim(self, min_=None, max_=None):
         self.axes.set_xlim(min_, max_)
 
     def set_ylim(self, min_=None, max_=None):
         self.axes.set_ylim(min_, max_)
+
+    def get_visible(self):
+        return self._visible
+
+    def set_visible(self, visible):
+        self._visible = visible
