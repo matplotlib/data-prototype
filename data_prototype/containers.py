@@ -82,14 +82,15 @@ class NoNewKeys(ValueError): ...
 
 
 class ArrayContainer:
-    def __init__(self, **data):
+    def __init__(self, coordinates: dict[str, str] | None = None, /, **data):
+        coordinates = coordinates or {}
         self._data = data
         self._cache_key = str(uuid.uuid4())
         self._desc = {
             k: (
-                Desc(v.shape, v.dtype)
+                Desc(v.shape, coordinates.get(k, "auto"))
                 if isinstance(v, np.ndarray)
-                else Desc((), type(v))
+                else Desc(())
             )
             for k, v in data.items()
         }
@@ -117,7 +118,7 @@ class ArrayContainer:
 
 class RandomContainer:
     def __init__(self, **shapes):
-        self._desc = {k: Desc(s, np.dtype(float)) for k, s in shapes.items()}
+        self._desc = {k: Desc(s) for k, s in shapes.items()}
 
     def query(
         self,
@@ -171,7 +172,7 @@ class FuncContainer:
         def _split(input_dict):
             out = {}
             for k, (shape, func) in input_dict.items():
-                self._desc[k] = Desc(shape, np.dtype(float))
+                self._desc[k] = Desc(shape)
                 out[k] = func
             return out
 
@@ -196,7 +197,7 @@ class FuncContainer:
         # if hash_key in self._cache:
         #    return self._cache[hash_key], hash_key
 
-        desc = Desc(("N",), np.dtype("f8"))
+        desc = Desc(("N",))
         xy = {"x": desc, "y": desc}
         data_lim = graph.evaluator(
             desc_like(xy, coordinates="data"),
@@ -243,8 +244,8 @@ class HistContainer:
         self._raw_data = raw_data
         self._num_bins = num_bins
         self._desc = {
-            "edges": Desc((num_bins + 1 + 2,), np.dtype(float)),
-            "density": Desc((num_bins + 2,), np.dtype(float)),
+            "edges": Desc((num_bins + 1 + 2,)),
+            "density": Desc((num_bins + 2,)),
         }
         self._full_range = (raw_data.min(), raw_data.max())
         self._cache: MutableMapping[Union[str, int], Any] = LFUCache(64)
@@ -256,7 +257,7 @@ class HistContainer:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         dmin, dmax = self._full_range
 
-        desc = Desc(("N",), np.dtype("f8"))
+        desc = Desc(("N",))
         xy = {"x": desc, "y": desc}
         data_lim = graph.evaluator(
             desc_like(xy, coordinates="data"),
@@ -302,8 +303,8 @@ class SeriesContainer:
         self._index_name = index_name
         self._col_name = col_name
         self._desc = {
-            index_name: Desc((len(series),), series.index.dtype),
-            col_name: Desc((len(series),), series.dtype),
+            index_name: Desc((len(series),)),
+            col_name: Desc((len(series),)),
         }
         self._hash_key = str(uuid.uuid4())
 
@@ -343,9 +344,9 @@ class DataFrameContainer:
 
         self._desc: Dict[str, Desc] = {}
         if self._index_name is not None:
-            self._desc[self._index_name] = Desc((len(df),), df.index.dtype)
+            self._desc[self._index_name] = Desc((len(df),))
         for col, out in self._col_name_dict.items():
-            self._desc[out] = Desc((len(df),), df[col].dtype)
+            self._desc[out] = Desc((len(df),))
 
         self._hash_key = str(uuid.uuid4())
 

@@ -12,29 +12,46 @@ import numpy as np
 
 from matplotlib.colors import Normalize
 
-from data_prototype.wrappers import LineWrapper, FormattedText
+from data_prototype.wrappers import FormattedText
+from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.line import Line
 from data_prototype.containers import ArrayContainer
+from data_prototype.description import Desc
 from data_prototype.conversion_node import FunctionConversionNode
+from data_prototype.conversion_edge import FuncEdge
+
 
 cmap = plt.colormaps["viridis"]
 cmap.set_over("k")
 cmap.set_under("r")
 norm = Normalize(1, 8)
 
-line_converter = FunctionConversionNode.from_funcs(
-    {
-        # arbitrary functions
-        "lw": lambda lw: min(1 + lw, 5),
-        # standard color mapping
-        "color": lambda j: cmap(norm(j)),
-        # categorical
-        "ls": lambda cat: {"A": "-", "B": ":", "C": "--"}[cat[()]],
-    },
-)
+line_edges = [
+    FuncEdge.from_func(
+        "lw",
+        lambda lw: min(1 + lw, 5),
+        {"lw": Desc((), "auto")},
+        {"linewidth": Desc((), "display")},
+    ),
+    # Probably should separate out norm/cmap step
+    # Slight lie about color being a string here, because of limitations in impl
+    FuncEdge.from_func(
+        "cmap",
+        lambda j: cmap(norm(j)),
+        {"j": Desc((), "auto")},
+        {"color": Desc((), "display")},
+    ),
+    FuncEdge.from_func(
+        "ls",
+        lambda cat: {"A": "-", "B": ":", "C": "--"}[cat],
+        {"cat": Desc((), "auto")},
+        {"linestyle": Desc((), "display")},
+    ),
+]
 
 text_converter = FunctionConversionNode.from_funcs(
     {
-        "text": lambda j, cat: f"index={j[()]} class={cat[()]!r}",
+        "text": lambda j, cat: f"index={j[()]} class={cat!r}",
         "y": lambda j: j,
         "x": lambda x: 2 * np.pi,
     },
@@ -53,13 +70,15 @@ for j in range(10):
             "y": np.sin(th + j * delta) + j,
             "j": np.asarray(j),
             "lw": np.asarray(j),
-            "cat": np.asarray({0: "A", 1: "B", 2: "C"}[j % 3]),
+            "cat": {0: "A", 1: "B", 2: "C"}[j % 3],
         }
     )
     ax.add_artist(
-        LineWrapper(
-            ac,
-            line_converter,
+        CA(
+            Line(
+                ac,
+                line_edges,
+            )
         )
     )
     ax.add_artist(

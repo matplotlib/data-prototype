@@ -22,7 +22,9 @@ from data_prototype.description import Desc
 
 from data_prototype.conversion_node import FunctionConversionNode
 
-from data_prototype.wrappers import LineWrapper, FormattedText
+from data_prototype.wrappers import FormattedText
+from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.line import Line
 
 
 class SinOfTime:
@@ -32,10 +34,10 @@ class SinOfTime:
 
     def describe(self):
         return {
-            "x": Desc([self.N], float),
-            "y": Desc([self.N], float),
-            "phase": Desc([], float),
-            "time": Desc([], float),
+            "x": Desc((self.N,)),
+            "y": Desc((self.N,)),
+            "phase": Desc(()),
+            "time": Desc(()),
         }
 
     def query(
@@ -45,18 +47,15 @@ class SinOfTime:
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
         th = np.linspace(0, 2 * np.pi, self.N)
 
-        def next_time():
-            cur_time = time.time()
+        cur_time = time.time()
 
-            phase = 2 * np.pi * (self.scale * cur_time % 60) / 60
-            return {
-                "x": th,
-                "y": np.sin(th + phase),
-                "phase": phase,
-                "time": cur_time,
-            }, hash(cur_time)
-
-        return next_time()
+        phase = 2 * np.pi * (self.scale * cur_time % 60) / 60
+        return {
+            "x": th,
+            "y": np.sin(th + phase),
+            "phase": phase,
+            "time": cur_time,
+        }, hash(cur_time)
 
 
 def update(frame, art):
@@ -64,7 +63,7 @@ def update(frame, art):
 
 
 sot_c = SinOfTime()
-lw = LineWrapper(sot_c, lw=5, color="green", label="sin(time)")
+lw = CA(Line(sot_c, linewidth=5, color="green", label="sin(time)"))
 fc = FormattedText(
     sot_c,
     FunctionConversionNode.from_funcs(

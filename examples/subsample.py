@@ -21,7 +21,9 @@ from matplotlib.colors import Normalize
 import numpy as np
 
 from data_prototype.description import Desc, desc_like
-from data_prototype.wrappers import ImageWrapper
+from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.image import Image
+from data_prototype.containers import ArrayContainer
 
 from skimage.transform import downscale_local_mean
 
@@ -38,9 +40,9 @@ Z += np.random.random(Z.shape) - 0.5
 class Subsample:
     def describe(self):
         return {
-            "xextent": Desc([2], float),
-            "yextent": Desc([2], float),
-            "image": Desc([], float),
+            "x": Desc((2,)),
+            "y": Desc((2,)),
+            "image": Desc(("M", "N")),
         }
 
     def query(
@@ -48,7 +50,7 @@ class Subsample:
         graph,
         parent_coordinates="axes",
     ) -> Tuple[Dict[str, Any], Union[str, int]]:
-        desc = Desc(("N",), np.dtype("f8"), coordinates="data")
+        desc = Desc(("N",), coordinates="data")
         xy = {"x": desc, "y": desc}
         data_lim = graph.evaluator(xy, desc_like(xy, coordinates="axes")).inverse
 
@@ -65,19 +67,21 @@ class Subsample:
         yscale = int(np.ceil((yi2 - yi1) / 50))
 
         return {
-            "xextent": [x1, x2],
-            "yextent": [y1, y2],
+            "x": [x1, x2],
+            "y": [y1, y2],
             "image": downscale_local_mean(Z[xi1:xi2, yi1:yi2], (xscale, yscale)),
         }, hash((x1, x2, y1, y2))
 
 
+non_sub = ArrayContainer(**{"image": Z, "x": np.array([0, 1]), "y": np.array([0, 10])})
+
 sub = Subsample()
 cmap = mpl.colormaps["coolwarm"]
 norm = Normalize(-2.2, 2.2)
-im = ImageWrapper(sub, cmap=cmap, norm=norm)
+im = Image(sub, cmap=cmap, norm=norm)
 
 fig, ax = plt.subplots()
-ax.add_artist(im)
+ax.add_artist(CA(im))
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
 plt.show()

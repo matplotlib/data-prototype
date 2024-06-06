@@ -1,7 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeAlias, Tuple, Union
-
-import numpy as np
+from typing import TypeAlias, Tuple, Union, overload
 
 
 ShapeSpec: TypeAlias = Tuple[Union[str, int], ...]
@@ -16,8 +14,7 @@ class Desc:
     #   - what is the relative size to the other variable values (N vs N+1)
     # We are probably going to have to implement a DSL for this (😞)
     shape: ShapeSpec
-    dtype: np.dtype
-    coordinates: str = "naive"
+    coordinates: str = "auto"
 
     @staticmethod
     def validate_shapes(
@@ -106,28 +103,51 @@ class Desc:
         return None
 
     @staticmethod
-    def compatible(a: dict[str, "Desc"], b: dict[str, "Desc"]) -> bool:
+    def compatible(
+        a: dict[str, "Desc"],
+        b: dict[str, "Desc"],
+        aliases: tuple[tuple[str, str], ...] = (),
+    ) -> bool:
         """Determine if ``a`` is a valid input for ``b``.
 
         Note: ``a`` _may_ have additional keys.
         """
+
+        def resolve_aliases(coord):
+            while True:
+                for coa, cob in aliases:
+                    if coord == coa:
+                        coord = cob
+                        break
+                else:
+                    break
+            return coord
+
         try:
             Desc.validate_shapes(b, a)
         except (KeyError, ValueError):
             return False
         for k, v in b.items():
-            if a[k].coordinates != v.coordinates:
+            if resolve_aliases(a[k].coordinates) != resolve_aliases(v.coordinates):
                 return False
         return True
 
 
-def desc_like(desc, shape=None, dtype=None, coordinates=None):
+@overload
+def desc_like(desc: Desc, shape=None, coordinates=None) -> Desc: ...
+
+
+@overload
+def desc_like(
+    desc: dict[str, Desc], shape=None, coordinates=None
+) -> dict[str, Desc]: ...
+
+
+def desc_like(desc, shape=None, coordinates=None):
     if isinstance(desc, dict):
-        return {k: desc_like(v, shape, dtype, coordinates) for k, v in desc.items()}
+        return {k: desc_like(v, shape, coordinates) for k, v in desc.items()}
     if shape is None:
         shape = desc.shape
-    if dtype is None:
-        dtype = desc.dtype
     if coordinates is None:
         coordinates = desc.coordinates
-    return Desc(shape, dtype, coordinates)
+    return Desc(shape, coordinates)
