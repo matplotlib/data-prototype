@@ -9,6 +9,8 @@ from .artist import Artist
 from .description import Desc
 from .conversion_edge import Graph, CoordinateEdge, DefaultEdge
 
+segment_hits = mlines.segment_hits
+
 
 class Line(Artist):
     def __init__(self, container, edges=None, **kwargs):
@@ -56,6 +58,68 @@ class Line(Artist):
         # - markevery
         # - non-str markers
         # Each individually pretty easy, but relatively rare features, focusing on common cases
+
+    def contains(self, mouseevent, graph=None):
+        """
+        Test whether *mouseevent* occurred on the line.
+
+        An event is deemed to have occurred "on" the line if it is less
+        than ``self.pickradius`` (default: 5 points) away from it.  Use
+        `~.Line2D.get_pickradius` or `~.Line2D.set_pickradius` to get or set
+        the pick radius.
+
+        Parameters
+        ----------
+        mouseevent : `~matplotlib.backend_bases.MouseEvent`
+
+        Returns
+        -------
+        contains : bool
+            Whether any values are within the radius.
+        details : dict
+            A dictionary ``{'ind': pointlist}``, where *pointlist* is a
+            list of points of the line that are within the pickradius around
+            the event position.
+
+            TODO: sort returned indices by distance
+        """
+        if graph is None:
+            return False, {}
+
+        g = graph + self._graph
+        desc = Desc(("N",), "display")
+        scalar = Desc((), "display")  # ... this needs thinking...
+        # Convert points to pixels
+        require = {
+            "x": desc,
+            "y": desc,
+            "linestyle": scalar,
+        }
+        conv = g.evaluator(self._container.describe(), require)
+        query, _ = self._container.query(g)
+        xt, yt, linestyle = conv.evaluate(query).values()
+
+        # Convert pick radius from points to pixels
+        pixels = 5  # self._pickradius # TODO
+
+        # The math involved in checking for containment (here and inside of
+        # segment_hits) assumes that it is OK to overflow, so temporarily set
+        # the error flags accordingly.
+        with np.errstate(all="ignore"):
+            # Check for collision
+            if linestyle in ["None", None]:
+                # If no line, return the nearby point(s)
+                (ind,) = np.nonzero(
+                    (xt - mouseevent.x) ** 2 + (yt - mouseevent.y) ** 2 <= pixels**2
+                )
+            else:
+                # If line, return the nearby segment(s)
+                ind = segment_hits(mouseevent.x, mouseevent.y, xt, yt, pixels)
+                # if self._drawstyle.startswith("steps"):
+                #    ind //= 2
+
+        # Return the point(s) within radius
+        return len(ind) > 0, dict(ind=ind)
 
     def draw(self, renderer, graph: Graph) -> None:
         if not self.get_visible():
