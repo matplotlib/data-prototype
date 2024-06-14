@@ -7,14 +7,16 @@ Using third party units functionality in conjunction with Matplotlib Axes
 """
 
 import numpy as np
+from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 
+from data_prototype.artist import CompatibilityAxes
 from data_prototype.containers import ArrayContainer
-from data_prototype.conversion_node import DelayedConversionNode
+from data_prototype.conversion_edge import FuncEdge
 
-from data_prototype.wrappers import PathCollectionWrapper
+from data_prototype.line import Line
 
 import pint
 
@@ -23,7 +25,11 @@ ureg.setup_matplotlib()
 
 marker_obj = mmarkers.MarkerStyle("o")
 
+
+coords = defaultdict(lambda: "auto")
+coords["x"] = coords["y"] = "units"
 cont = ArrayContainer(
+    coords,
     x=np.array([0, 1, 2]) * ureg.m,
     y=np.array([1, 4, 2]) * ureg.m,
     paths=np.array([marker_obj.get_path()]),
@@ -32,17 +38,17 @@ cont = ArrayContainer(
     facecolors=np.array(["C3"]),
 )
 
-fig, ax = plt.subplots()
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
 ax.set_xlim(-0.5, 7)
 ax.set_ylim(0, 5)
 
-# DelayedConversionNode is used to identify the keys which undergo unit transformations
-# The actual method which does conversions in this example is added by the
-# `Axis`/`Axes`, but `PathCollectionWrapper` does not natively interact with the units.
-xconv = DelayedConversionNode.from_keys(("x",), converter_key="xunits")
-yconv = DelayedConversionNode.from_keys(("y",), converter_key="yunits")
-lw = PathCollectionWrapper(cont, [xconv, yconv], offset_transform=ax.transData)
+xconv = FuncEdge.from_func("xconv", lambda x, xunits: x.to(xunits), "units", "data")
+yconv = FuncEdge.from_func("yconv", lambda y, yunits: y.to(yunits), "units", "data")
+lw = Line(cont, [xconv, yconv])
 ax.add_artist(lw)
-ax.xaxis.set_units(ureg.feet)
-ax.yaxis.set_units(ureg.m)
+nax.xaxis.set_units(ureg.feet)
+nax.yaxis.set_units(ureg.m)
+
 plt.show()
