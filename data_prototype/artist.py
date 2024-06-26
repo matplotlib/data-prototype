@@ -265,13 +265,13 @@ class CompatibilityAxes(Artist):
                 ),
                 FuncEdge.from_func(
                     "xunits",
-                    lambda: self._axes.xunits,
+                    lambda: self._axes.xaxis.units,
                     {},
                     {"xunits": Desc((), "units")},
                 ),
                 FuncEdge.from_func(
                     "yunits",
-                    lambda: self._axes.yunits,
+                    lambda: self._axes.yaxis.units,
                     {},
                     {"yunits": Desc((), "units")},
                 ),
