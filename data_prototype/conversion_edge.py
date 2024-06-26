@@ -295,6 +295,12 @@ class Graph:
                 def __gt__(self, other):
                     return self.weight > other.weight
 
+                @property
+                def edges(self):
+                    if self.prev_node is None:
+                        return [self.edge]
+                    return self.prev_node.edges + [self.edge]
+
             q: PriorityQueue[Node] = PriorityQueue()
             q.put(Node(0, input))
 
@@ -308,6 +314,8 @@ class Graph:
                         best = n
                     continue
                 for e in sub_edges:
+                    if e in n.edges:
+                        continue
                     if Desc.compatible(n.desc, e.input, aliases=self._aliases):
                         d = n.desc | e.output
                         w = n.weight + e.weight
@@ -397,7 +405,7 @@ class Graph:
                 )
 
         try:
-            pos = nx.planar_layout(G)
+            pos = nx.shell_layout(G)
         except Exception:
             pos = nx.circular_layout(G)
         plt.figure()

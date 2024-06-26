@@ -13,7 +13,8 @@ The mandelbrot recomputes as it is zoomed in and/or panned.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_prototype.wrappers import ImageWrapper
+from data_prototype.artist import CompatibilityAxes
+from data_prototype.image import Image
 from data_prototype.containers import FuncContainer
 
 from matplotlib.colors import Normalize
@@ -36,19 +37,22 @@ def mandelbrot_set(X, Y, maxiter, *, horizon=3, power=2):
 fc = FuncContainer(
     {},
     xyfuncs={
-        "xextent": ((2,), lambda x, y: [x[0], x[-1]]),
-        "yextent": ((2,), lambda x, y: [y[0], y[-1]]),
+        "x": ((2,), lambda x, y: [x[0], x[-1]]),
+        "y": ((2,), lambda x, y: [y[0], y[-1]]),
         "image": (("N", "M"), lambda x, y: mandelbrot_set(x, y, maxiter)[1]),
     },
 )
 cmap = plt.get_cmap()
 cmap.set_under("w")
-im = ImageWrapper(fc, norm=Normalize(0, maxiter), cmap=cmap)
+im = Image(fc, norm=Normalize(0, maxiter), cmap=cmap)
 
-fig, ax = plt.subplots()
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
 ax.add_artist(im)
 ax.set_xlim(-1, 1)
 ax.set_ylim(-1, 1)
-ax.set_aspect("equal")
-fig.colorbar(im)
+
+nax.set_aspect("equal")  # No equivalent yet
+
 plt.show()

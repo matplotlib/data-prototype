@@ -89,8 +89,8 @@ class ArrayContainer:
         self._desc = {
             k: (
                 Desc(v.shape, coordinates.get(k, "auto"))
-                if isinstance(v, np.ndarray)
-                else Desc(())
+                if hasattr(v, "shape")
+                else Desc((), coordinates.get(k, "auto"))
             )
             for k, v in data.items()
         }
