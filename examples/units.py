@@ -63,7 +63,7 @@ yconv = FuncEdge.from_func(
 lw = Line(cont, [xconv, yconv])
 
 ax.add_artist(lw)
-nax.xaxis.set_units(ureg.feet)
-nax.yaxis.set_units(ureg.m)
+nax.xaxis.set_units(ureg.m)
+nax.yaxis.set_units(ureg.cm)
 
 plt.show()
