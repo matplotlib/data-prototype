@@ -14,11 +14,11 @@ def _interpolate_nearest(image, x, y):
     l, r = x
     width = int(((round(r) + 0.5) - (round(l) - 0.5)) * magnification)
 
-    xpix = np.digitize(np.arange(width), np.linspace(0, r - l, image.shape[1] + 1))
+    xpix = np.digitize(np.arange(width), np.linspace(0, r - l, image.shape[1]))
 
     b, t = y
     height = int(((round(t) + 0.5) - (round(b) - 0.5)) * magnification)
-    ypix = np.digitize(np.arange(height), np.linspace(0, t - b, image.shape[0] + 1))
+    ypix = np.digitize(np.arange(height), np.linspace(0, t - b, image.shape[0]))
 
     out = np.empty((height, width, 4))
 
@@ -53,7 +53,7 @@ class Image(Artist):
             {"image": Desc(("O", "P", 4), coordinates="rgba_resampled")},
         )
 
-        self._edges += [
+        edges = [
             CoordinateEdge.from_coords("xycoords", {"x": "auto", "y": "auto"}, "data"),
             CoordinateEdge.from_coords(
                 "image_coords", {"image": Desc(("M", "N"), "auto")}, "data"
@@ -79,7 +79,7 @@ class Image(Artist):
             self._interpolation_edge,
         ]
 
-        self._graph = Graph(self._edges, (("data", "data_resampled"),))
+        self._graph = self._graph + Graph(edges, (("data", "data_resampled"),))
 
     def draw(self, renderer, graph: Graph) -> None:
         if not self.get_visible():
@@ -111,3 +111,29 @@ class Image(Artist):
             mtransforms.Bbox.from_extents(clipx[0], clipy[0], clipx[1], clipy[1])
         )
         renderer.draw_image(gc, x[0], y[0], image)  # TODO vector backend transforms
+
+    def contains(self, mouseevent, graph=None):
+        if graph is None:
+            return False, {}
+        g = graph + self._graph
+        conv = g.evaluator(
+            self._container.describe(),
+            {
+                "x": Desc(("X",), "display"),
+                "y": Desc(("Y",), "display"),
+            },
+        ).inverse
+        query, _ = self._container.query(g)
+        xmin, xmax = query["x"]
+        ymin, ymax = query["y"]
+        x, y = conv.evaluate({"x": mouseevent.x, "y": mouseevent.y}).values()
+
+        # This checks xmin <= x <= xmax *or* xmax <= x <= xmin.
+        inside = (
+            x is not None
+            and (x - xmin) * (x - xmax) <= 0
+            and y is not None
+            and (y - ymin) * (y - ymax) <= 0
+        )
+
+        return inside, {}

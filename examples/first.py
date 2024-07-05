@@ -38,4 +38,5 @@ ax.add_artist(lw, 3)
 ax.add_artist(lw2, 2)
 ax.set_xlim(0, np.pi * 4)
 ax.set_ylim(-1.1, 1.1)
+
 plt.show()

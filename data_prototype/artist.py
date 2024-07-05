@@ -3,9 +3,12 @@ from typing import Sequence
 
 import numpy as np
 
+from matplotlib.backend_bases import PickEvent
+import matplotlib.artist as martist
+
 from .containers import DataContainer, ArrayContainer, DataUnion
 from .description import Desc, desc_like
-from .conversion_edge import Edge, Graph, TransformEdge
+from .conversion_edge import Edge, FuncEdge, Graph, TransformEdge
 
 
 class Artist:
@@ -17,6 +20,9 @@ class Artist:
     ):
         kwargs_cont = ArrayContainer(**kwargs)
         self._container = DataUnion(container, kwargs_cont)
+
+        self._children: list[tuple[float, Artist]] = []
+        self._picker = None
 
         edges = edges or []
         self._visible = True
@@ -41,6 +47,77 @@ class Artist:
     def set_visible(self, visible):
         self._visible = visible
 
+    def pickable(self) -> bool:
+        return self._picker is not None
+
+    def get_picker(self):
+        return self._picker
+
+    def set_picker(self, picker):
+        self._picker = picker
+
+    def contains(self, mouseevent, graph=None):
+        """
+        Test whether the artist contains the mouse event.
+
+        Parameters
+        ----------
+        mouseevent : `~matplotlib.backend_bases.MouseEvent`
+
+        Returns
+        -------
+        contains : bool
+            Whether any values are within the radius.
+        details : dict
+            An artist-specific dictionary of details of the event context,
+            such as which points are contained in the pick radius. See the
+            individual Artist subclasses for details.
+        """
+        return False, {}
+
+    def get_children(self):
+        return [a[1] for a in self._children]
+
+    def pick(self, mouseevent, graph: Graph | None = None):
+        """
+        Process a pick event.
+
+        Each child artist will fire a pick event if *mouseevent* is over
+        the artist and the artist has picker set.
+
+        See Also
+        --------
+        set_picker, get_picker, pickable
+        """
+        if graph is None:
+            graph = self._graph
+        else:
+            graph = graph + self._graph
+        # Pick self
+        if self.pickable():
+            picker = self.get_picker()
+            if callable(picker):
+                inside, prop = picker(self, mouseevent)
+            else:
+                inside, prop = self.contains(mouseevent, graph)
+            if inside:
+                PickEvent(
+                    "pick_event", mouseevent.canvas, mouseevent, self, **prop
+                )._process()
+
+        # Pick children
+        for a in self.get_children():
+            # make sure the event happened in the same Axes
+            ax = getattr(a, "axes", None)
+            if mouseevent.inaxes is None or ax is None or mouseevent.inaxes == ax:
+                # we need to check if mouseevent.inaxes is None
+                # because some objects associated with an Axes (e.g., a
+                # tick label) can be outside the bounding box of the
+                # Axes and inaxes will be None
+                # also check that ax is None so that it traverse objects
+                # which do not have an axes property but children might
+                a.pick(mouseevent, graph)
+
 
 class CompatibilityArtist:
     """A compatibility shim to ducktype as a classic Matplotlib Artist.
@@ -59,7 +136,7 @@ class CompatibilityArtist:
     useful for avoiding accidental dependency.
     """
 
-    def __init__(self, artist: Artist):
+    def __init__(self, artist: martist.Artist):
         self._artist = artist
 
         self._axes = None
@@ -134,7 +211,7 @@ class CompatibilityArtist:
         self._artist.draw(renderer, graph + self._graph)
 
 
-class CompatibilityAxes:
+class CompatibilityAxes(Artist):
     """A compatibility shim to add to traditional matplotlib axes.
 
     At this time features are implemented on an "as needed" basis, and many
@@ -152,12 +229,11 @@ class CompatibilityAxes:
     """
 
     def __init__(self, axes):
+        super().__init__(ArrayContainer())
         self._axes = axes
         self.figure = None
         self._clippath = None
-        self._visible = True
         self.zorder = 2
-        self._children: list[tuple[float, Artist]] = []
 
     @property
     def axes(self):
@@ -187,6 +263,18 @@ class CompatibilityAxes:
                     desc_like(xy, coordinates="display"),
                     transform=self._axes.transAxes,
                 ),
+                FuncEdge.from_func(
+                    "xunits",
+                    lambda: self._axes.xaxis.units,
+                    {},
+                    {"xunits": Desc((), "units")},
+                ),
+                FuncEdge.from_func(
+                    "yunits",
+                    lambda: self._axes.yaxis.units,
+                    {},
+                    {"yunits": Desc((), "units")},
+                ),
             ],
             aliases=(("parent", "axes"),),
         )
@@ -210,7 +298,7 @@ class CompatibilityAxes:
         return False
 
     def draw(self, renderer, graph=None):
-        if not self.visible:
+        if not self.get_visible():
             return
         if graph is None:
             graph = Graph([])
@@ -228,9 +316,3 @@ class CompatibilityAxes:
 
     def set_ylim(self, min_=None, max_=None):
         self.axes.set_ylim(min_, max_)
-
-    def get_visible(self):
-        return self._visible
-
-    def set_visible(self, visible):
-        self._visible = visible

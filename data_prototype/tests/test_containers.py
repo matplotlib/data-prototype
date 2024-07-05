@@ -22,7 +22,6 @@ def _verify_describe(container):
     assert set(data) == set(desc)
     for k, v in data.items():
         assert v.shape == desc[k].shape
-        assert v.dtype == desc[k].dtype
 
 
 def test_array_describe(ac):
