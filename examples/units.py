@@ -50,20 +50,20 @@ unit_vector = Desc(("N",), "units")
 
 xconv = FuncEdge.from_func(
     "xconv",
-    lambda x, xunits: x.to(xunits),
+    lambda x, xunits: x.to(xunits).magnitude,
     {"x": unit_vector, "xunits": scalar},
     {"x": Desc(("N",), "data")},
 )
 yconv = FuncEdge.from_func(
     "yconv",
-    lambda y, yunits: y.to(yunits),
+    lambda y, yunits: y.to(yunits).magnitude,
     {"y": unit_vector, "yunits": scalar},
     {"y": Desc(("N",), "data")},
 )
 lw = Line(cont, [xconv, yconv])
 
 ax.add_artist(lw)
-nax.xaxis.set_units(ureg.m)
-nax.yaxis.set_units(ureg.cm)
+nax.xaxis.set_units(ureg.ft)
+nax.yaxis.set_units(ureg.m)
 
 plt.show()
