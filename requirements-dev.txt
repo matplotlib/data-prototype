@@ -2,13 +2,13 @@
 # the documentation) but not necessarily required for _using_ it.
 codecov
 coverage
-flake8
 pytest
 sphinx
 twine
 pre-commit
 black
 nbstripout
+ruff
 # These are dependencies of various sphinx extensions for documentation.
 ipython
 matplotlib

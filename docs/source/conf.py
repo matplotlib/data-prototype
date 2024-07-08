@@ -23,6 +23,8 @@ import os
 # sys.path.insert(0, os.path.abspath('.'))
 from pathlib import Path
 
+import data_prototype
+
 # are we running circle CI?
 CIRCLECI = "CIRCLECI" in os.environ
 
@@ -89,7 +91,7 @@ sphinx_gallery_conf = {
     "reference_url": {
         "matplotlib": None,
     },
-    "backreferences_dir": Path("api") / Path("_as_gen"),
+    "backreferences_dir": Path("api", "_as_gen"),
     "remove_config_comments": True,
     "min_reported_time": 1,
     "thumbnail_size": (320, 224),
@@ -126,7 +128,6 @@ author = "Thomas A Caswell"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-import data_prototype
 
 # The short X.Y version.
 version = data_prototype.__version__

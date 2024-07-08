@@ -27,9 +27,9 @@ def mandelbrot_set(X, Y, maxiter, *, horizon=3, power=2):
     N = np.zeros_like(C, dtype=int)
     Z = np.zeros_like(C)
     for n in range(maxiter):
-        I = abs(Z) < horizon
-        N += I
-        Z[I] = Z[I] ** power + C[I]
+        mask = abs(Z) < horizon
+        N += mask
+        Z[mask] = Z[mask] ** power + C[mask]
     N[N == maxiter] = -1
     return Z, N
 
