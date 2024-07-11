@@ -23,6 +23,8 @@ import os
 # sys.path.insert(0, os.path.abspath('.'))
 from pathlib import Path
 
+import data_prototype
+
 # are we running circle CI?
 CIRCLECI = "CIRCLECI" in os.environ
 
@@ -64,21 +66,6 @@ is_release_build = False
 
 # Sphinx gallery configuration
 
-
-def matplotlib_reduced_latex_scraper(block, block_vars, gallery_conf, **kwargs):
-    """
-    Reduce srcset when creating a PDF.
-
-    Because sphinx-gallery runs *very* early, we cannot modify this even in the
-    earliest builder-inited signal. Thus we do it at scraping time.
-    """
-    from sphinx_gallery.scrapers import matplotlib_scraper
-
-    if gallery_conf["builder_name"] == "latex":
-        gallery_conf["image_srcset"] = []
-    return matplotlib_scraper(block, block_vars, gallery_conf, **kwargs)
-
-
 sphinx_gallery_conf = {
     "examples_dirs": [
         "../../examples",
@@ -89,11 +76,10 @@ sphinx_gallery_conf = {
     "reference_url": {
         "matplotlib": None,
     },
-    "backreferences_dir": Path("api") / Path("_as_gen"),
+    "backreferences_dir": Path("api", "_as_gen"),
     "remove_config_comments": True,
     "min_reported_time": 1,
     "thumbnail_size": (320, 224),
-    "image_scrapers": (matplotlib_reduced_latex_scraper,),
     # Compression is a significant effort that we skip for local and CI builds.
     "compress_images": ("thumbnails", "images") if is_release_build else (),
     "matplotlib_animations": True,
@@ -126,7 +112,6 @@ author = "Thomas A Caswell"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-import data_prototype
 
 # The short X.Y version.
 version = data_prototype.__version__

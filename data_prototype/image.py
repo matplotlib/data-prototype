@@ -11,14 +11,14 @@ from .conversion_edge import FuncEdge, Graph, CoordinateEdge
 
 def _interpolate_nearest(image, x, y):
     magnification = 1  # TODO
-    l, r = x
-    width = int(((round(r) + 0.5) - (round(l) - 0.5)) * magnification)
+    lef, rig = x
+    width = int(((round(rig) + 0.5) - (round(lef) - 0.5)) * magnification)
 
-    xpix = np.digitize(np.arange(width), np.linspace(0, r - l, image.shape[1]))
+    xpix = np.digitize(np.arange(width), np.linspace(0, rig - lef, image.shape[1]))
 
-    b, t = y
-    height = int(((round(t) + 0.5) - (round(b) - 0.5)) * magnification)
-    ypix = np.digitize(np.arange(height), np.linspace(0, t - b, image.shape[0]))
+    bot, top = y
+    height = int(((round(top) + 0.5) - (round(bot) - 0.5)) * magnification)
+    ypix = np.digitize(np.arange(height), np.linspace(0, top - bot, image.shape[0]))
 
     out = np.empty((height, width, 4))
 
