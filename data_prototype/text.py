@@ -1,18 +1,43 @@
 import numpy as np
 
+from matplotlib.font_manager import FontProperties
 
 from .artist import Artist
 from .description import Desc
-from .conversion_edge import Graph, CoordinateEdge
+from .conversion_edge import Graph, CoordinateEdge, DefaultEdge
 
 
 class Text(Artist):
     def __init__(self, container, edges=None, **kwargs):
         super().__init__(container, edges, **kwargs)
 
+        scalar = Desc((), "display")
+
         edges = [
             CoordinateEdge.from_coords(
                 "xycoords", {"x": Desc((), "auto"), "y": Desc((), "auto")}, "data"
+            ),
+            CoordinateEdge.from_coords("text", {"text": Desc(())}, "display"),
+            CoordinateEdge.from_coords("color", {"color": Desc(())}, "display"),
+            CoordinateEdge.from_coords("alpha", {"alpha": Desc(())}, "display"),
+            CoordinateEdge.from_coords(
+                "fontproperties", {"fontproperties": Desc(())}, "display"
+            ),
+            CoordinateEdge.from_coords("usetex", {"usetex": Desc(())}, "display"),
+            CoordinateEdge.from_coords("rotation", {"rotation": Desc(())}, "display"),
+            CoordinateEdge.from_coords(
+                "antialiased", {"antialiased": Desc(())}, "display"
+            ),
+            DefaultEdge.from_default_value("text_def", "text", scalar, ""),
+            DefaultEdge.from_default_value("color_def", "color", scalar, "k"),
+            DefaultEdge.from_default_value("alpha_def", "alpha", scalar, 1),
+            DefaultEdge.from_default_value(
+                "fontproperties_def", "fontproperties", scalar, FontProperties()
+            ),
+            DefaultEdge.from_default_value("usetex_def", "usetex", scalar, False),
+            DefaultEdge.from_default_value("rotation_def", "rotation", scalar, 0),
+            DefaultEdge.from_default_value(
+                "antialiased_def", "antialiased", scalar, False
             ),
         ]
 
@@ -28,7 +53,7 @@ class Text(Artist):
                 "x": Desc((), "display"),
                 "y": Desc((), "display"),
                 "text": Desc((), "display"),
-                "color": Desc((4,), "rgba"),
+                "color": Desc((), "display"),
                 "alpha": Desc((), "display"),
                 "fontproperties": Desc((), "display"),
                 "usetex": Desc((), "display"),
@@ -52,6 +77,10 @@ class Text(Artist):
 
         x = evald["x"]
         y = evald["y"]
+
+        _, canvash = renderer.get_canvas_width_height()
+        if renderer.flipy():
+            y = canvash - y
 
         if not np.isfinite(x) or not np.isfinite(y):
             # TODO: log?

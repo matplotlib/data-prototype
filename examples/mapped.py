@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.colors import Normalize
-from matplotlib.font_manager import FontProperties
 
 from data_prototype.artist import CompatibilityAxes
 from data_prototype.line import Line
@@ -68,12 +67,6 @@ text_edges = [
         {},
         {"x": Desc((), "data")},
     ),
-    FuncEdge.from_func(
-        "color",
-        lambda: (0, 0, 0, 1),
-        {},
-        {"color": Desc((4,), "rgba")},
-    ),
 ]
 
 
@@ -108,11 +101,6 @@ for j in range(10):
             x=2 * np.pi,
             # ha="right",
             # bbox={"facecolor": "gray", "alpha": 0.5},
-            antialiased=False,
-            fontproperties=FontProperties(),
-            rotation=0,
-            alpha=1,
-            usetex=False,
         )
     )
 ax.set_xlim(0, np.pi * 2)

@@ -16,7 +16,6 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from matplotlib.font_manager import FontProperties
 
 from data_prototype.conversion_edge import Graph
 from data_prototype.description import Desc
@@ -39,12 +38,6 @@ class SinOfTime:
             "y": Desc((self.N,)),
             "phase": Desc(()),
             "time": Desc(()),
-            "rotation": Desc((), "display"),
-            "alpha": Desc((), "display"),
-            "color": Desc((4,), "rgba"),
-            "usetex": Desc((), "display"),
-            "antialiased": Desc((), "display"),
-            "fontproperties": Desc((), "display"),
         }
 
     def query(
@@ -62,12 +55,6 @@ class SinOfTime:
             "y": np.sin(th + phase),
             "phase": phase,
             "time": cur_time,
-            "rotation": 0,
-            "alpha": 1,
-            "color": np.array([0, 0, 0, 1]),
-            "usetex": False,
-            "antialiased": True,
-            "fontproperties": FontProperties(),
         }, hash(cur_time)
 
 
@@ -88,7 +75,7 @@ fc = Text(
         ),
     ],
     x=2 * np.pi,
-    y=0,
+    y=1,
     ha="right",
 )
 fig, nax = plt.subplots()
