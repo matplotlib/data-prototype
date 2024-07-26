@@ -16,15 +16,16 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.font_manager import FontProperties
 
 from data_prototype.conversion_edge import Graph
 from data_prototype.description import Desc
 
-from data_prototype.conversion_node import FunctionConversionNode
 
-from data_prototype.wrappers import FormattedText
-from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.artist import CompatibilityAxes
 from data_prototype.line import Line
+from data_prototype.text import Text
+from data_prototype.conversion_edge import FuncEdge
 
 
 class SinOfTime:
@@ -38,6 +39,12 @@ class SinOfTime:
             "y": Desc((self.N,)),
             "phase": Desc(()),
             "time": Desc(()),
+            "rotation": Desc((), "display"),
+            "alpha": Desc((), "display"),
+            "color": Desc((4,), "rgba"),
+            "usetex": Desc((), "display"),
+            "antialiased": Desc((), "display"),
+            "fontproperties": Desc((), "display"),
         }
 
     def query(
@@ -55,6 +62,12 @@ class SinOfTime:
             "y": np.sin(th + phase),
             "phase": phase,
             "time": cur_time,
+            "rotation": 0,
+            "alpha": 1,
+            "color": np.array([0, 0, 0, 1]),
+            "usetex": False,
+            "antialiased": True,
+            "fontproperties": FontProperties(),
         }, hash(cur_time)
 
 
@@ -63,15 +76,24 @@ def update(frame, art):
 
 
 sot_c = SinOfTime()
-lw = CA(Line(sot_c, linewidth=5, color="green", label="sin(time)"))
-fc = FormattedText(
+lw = Line(sot_c, linewidth=5, color="green", label="sin(time)")
+fc = Text(
     sot_c,
-    FunctionConversionNode.from_funcs(
-        {"text": lambda phase: f"ϕ={phase:.2f}", "x": lambda: 2 * np.pi, "y": lambda: 1}
-    ),
+    [
+        FuncEdge.from_func(
+            "text",
+            lambda phase: f"ϕ={phase:.2f}",
+            {"phase": Desc((), "auto")},
+            {"text": Desc((), "display")},
+        ),
+    ],
+    x=2 * np.pi,
+    y=0,
     ha="right",
 )
-fig, ax = plt.subplots()
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
 ax.add_artist(lw)
 ax.add_artist(fc)
 ax.set_xlim(0, 2 * np.pi)

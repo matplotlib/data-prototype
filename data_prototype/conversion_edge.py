@@ -327,6 +327,7 @@ class Graph:
                 import matplotlib.pyplot as plt
 
                 self.visualize(input)
+                self.visualize()
                 plt.show()
                 raise NotImplementedError(
                     "This may be possible, but is not a simple case already considered"
@@ -344,7 +345,7 @@ class Graph:
             else:
                 out_edges.append(SequenceEdge.from_edges("eval", edges, output_subset))
 
-        found_outputs = set()
+        found_outputs = set(input)
         for out in out_edges:
             found_outputs |= set(out.output)
         if missing := set(output) - found_outputs:
