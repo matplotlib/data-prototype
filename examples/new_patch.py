@@ -10,7 +10,6 @@ x, y, and path codes.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 from data_prototype.artist import CompatibilityAxes
