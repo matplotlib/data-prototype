@@ -25,7 +25,7 @@ sc = ArrayContainer(None, x=c.vertices[:, 0], y=c.vertices[:, 1], codes=c.codes)
 lw2 = Patch(sc, linewidth=3, linestyle=":", edgecolor="C5", alpha=1, hatch=None)
 
 fig, nax = plt.subplots()
-nax.set_aspect('equal')
+nax.set_aspect("equal")
 ax = CompatibilityAxes(nax)
 nax.add_artist(ax)
 ax.add_artist(lw2, 2)
