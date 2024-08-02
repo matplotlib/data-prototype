@@ -1,5 +1,6 @@
 from bisect import insort
 from typing import Sequence
+from contextlib import contextmanager
 
 import numpy as np
 
@@ -316,3 +317,12 @@ class CompatibilityAxes(Artist):
 
     def set_ylim(self, min_=None, max_=None):
         self.axes.set_ylim(min_, max_)
+
+
+@contextmanager
+def _renderer_group(renderer, group, gid):
+    renderer.open_group(group, gid)
+    try:
+        yield
+    finally:
+        renderer.close_group(group)
