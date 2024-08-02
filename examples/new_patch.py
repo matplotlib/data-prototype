@@ -1,4 +1,5 @@
 """
+Example of directly creating a Patch artist that is defined by a Path
 """
 
 import matplotlib.pyplot as plt
@@ -12,10 +13,6 @@ from data_prototype.containers import ArrayContainer
 from matplotlib.path import Path
 
 c = Path.unit_circle()
-
-# x = np.array([0, 0, 0.5, 1, 0])
-# y = np.array([0, 1, 1, 0, 0])
-# codes = np.array([Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
 
 sc = ArrayContainer(None, x=c.vertices[:, 0], y=c.vertices[:, 1], codes=c.codes)
 lw2 = Patch(sc, linewidth=3, linestyle=":", edgecolor="C5", alpha=1, hatch=None)
