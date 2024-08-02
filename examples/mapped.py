@@ -12,13 +12,12 @@ import numpy as np
 
 from matplotlib.colors import Normalize
 
-from data_prototype.wrappers import FormattedText
-from data_prototype.artist import CompatibilityArtist as CA
+from data_prototype.artist import CompatibilityAxes
 from data_prototype.line import Line
 from data_prototype.containers import ArrayContainer
 from data_prototype.description import Desc
-from data_prototype.conversion_node import FunctionConversionNode
 from data_prototype.conversion_edge import FuncEdge
+from data_prototype.text import Text
 
 
 cmap = plt.colormaps["viridis"]
@@ -49,19 +48,35 @@ line_edges = [
     ),
 ]
 
-text_converter = FunctionConversionNode.from_funcs(
-    {
-        "text": lambda j, cat: f"index={j[()]} class={cat!r}",
-        "y": lambda j: j,
-        "x": lambda x: 2 * np.pi,
-    },
-)
+text_edges = [
+    FuncEdge.from_func(
+        "text",
+        lambda j, cat: f"index={j[()]} class={cat!r}",
+        {"j": Desc((), "auto"), "cat": Desc((), "auto")},
+        {"text": Desc((), "display")},
+    ),
+    FuncEdge.from_func(
+        "y",
+        lambda j: j,
+        {"j": Desc((), "auto")},
+        {"y": Desc((), "data")},
+    ),
+    FuncEdge.from_func(
+        "x",
+        lambda: 2 * np.pi,
+        {},
+        {"x": Desc((), "data")},
+    ),
+]
 
 
 th = np.linspace(0, 2 * np.pi, 128)
 delta = np.pi / 9
 
-fig, ax = plt.subplots()
+fig, nax = plt.subplots()
+
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
 
 for j in range(10):
     ac = ArrayContainer(
@@ -74,20 +89,18 @@ for j in range(10):
         }
     )
     ax.add_artist(
-        CA(
-            Line(
-                ac,
-                line_edges,
-            )
+        Line(
+            ac,
+            line_edges,
         )
     )
     ax.add_artist(
-        FormattedText(
+        Text(
             ac,
-            text_converter,
+            text_edges,
             x=2 * np.pi,
-            ha="right",
-            bbox={"facecolor": "gray", "alpha": 0.5},
+            # ha="right",
+            # bbox={"facecolor": "gray", "alpha": 0.5},
         )
     )
 ax.set_xlim(0, np.pi * 2)

@@ -2,9 +2,12 @@ import numpy as np
 
 
 import matplotlib as mpl
+from data_prototype.artist import CompatibilityAxes
 from matplotlib.axes._axes import Axes as MPLAxes, _preprocess_data
+from matplotlib.axes._base import _process_plot_var_args
 import matplotlib.collections as mcoll
 import matplotlib.cbook as cbook
+import matplotlib.lines as mlines
 import matplotlib.markers as mmarkers
 import matplotlib.projections as mprojections
 
@@ -14,12 +17,19 @@ from .conversion_node import (
     FunctionConversionNode,
     RenameConversionNode,
 )
+from .line import Line
 from .wrappers import PathCollectionWrapper
 
 
 class Axes(MPLAxes):
     # Name for registering as a projection so we can experiment with it
     name = "data-prototype"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._ca = CompatibilityAxes(self)
+        self._get_lines_mirror = _process_plot_var_args("mirror")
+        self.add_artist(self._ca)
 
     @_preprocess_data(
         replace_names=[
@@ -141,6 +151,22 @@ class Axes(MPLAxes):
         self.add_artist(pcw)
         self._request_autoscale_view()
         return pcw
+
+    def plot(self, *args, scalex=True, scaley=True, data=None, **kwargs):
+        kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
+        line_args = [*self._get_lines_mirror(self, *args, data=data, **kwargs)]
+        print(line_args)
+        lines = []
+        for coord, kws in line_args:
+            cont = ArrayContainer(**{"x": coord[0], "y": coord[1]})
+            line = Line(cont, **kws)
+            lines.append(line)
+            self._ca.add_artist(line)
+        if scalex:
+            self._request_autoscale_view("x")
+        if scaley:
+            self._request_autoscale_view("y")
+        return lines
 
 
 # This is a handy trick to allow e.g. plt.subplots(subplot_kw={'projection': 'data-prototype'})

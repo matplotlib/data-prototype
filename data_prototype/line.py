@@ -18,7 +18,7 @@ class Line(Artist):
 
         scalar = Desc((), "display")  # ... this needs thinking...
 
-        edges = [
+        default_edges = [
             CoordinateEdge.from_coords("xycoords", {"x": "auto", "y": "auto"}, "data"),
             CoordinateEdge.from_coords("color", {"color": Desc(())}, "display"),
             CoordinateEdge.from_coords("linewidth", {"linewidth": Desc(())}, "display"),
@@ -45,7 +45,7 @@ class Line(Artist):
             DefaultEdge.from_default_value("mew_def", "markeredgewidth", scalar, 1),
             DefaultEdge.from_default_value("marker_def", "marker", scalar, "None"),
         ]
-        self._graph = self._graph + Graph(edges)
+        self._graph = self._graph + Graph(default_edges)
         # Currently ignoring:
         # - cap/join style
         # - url
