@@ -18,3 +18,5 @@ exclude = '''
   | tests/data
 )/
 '''
+
+[tool.setuptools_scm]
