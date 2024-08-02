@@ -4,41 +4,24 @@ from matplotlib.font_manager import FontProperties
 
 from .artist import Artist
 from .description import Desc
-from .conversion_edge import Graph, CoordinateEdge, DefaultEdge
+from .conversion_edge import Graph, CoordinateEdge, coord_and_default
 
 
 class Text(Artist):
     def __init__(self, container, edges=None, **kwargs):
         super().__init__(container, edges, **kwargs)
 
-        scalar = Desc((), "display")
-
         edges = [
             CoordinateEdge.from_coords(
                 "xycoords", {"x": Desc((), "auto"), "y": Desc((), "auto")}, "data"
             ),
-            CoordinateEdge.from_coords("text", {"text": Desc(())}, "display"),
-            CoordinateEdge.from_coords("color", {"color": Desc(())}, "display"),
-            CoordinateEdge.from_coords("alpha", {"alpha": Desc(())}, "display"),
-            CoordinateEdge.from_coords(
-                "fontproperties", {"fontproperties": Desc(())}, "display"
-            ),
-            CoordinateEdge.from_coords("usetex", {"usetex": Desc(())}, "display"),
-            CoordinateEdge.from_coords("rotation", {"rotation": Desc(())}, "display"),
-            CoordinateEdge.from_coords(
-                "antialiased", {"antialiased": Desc(())}, "display"
-            ),
-            DefaultEdge.from_default_value("text_def", "text", scalar, ""),
-            DefaultEdge.from_default_value("color_def", "color", scalar, "k"),
-            DefaultEdge.from_default_value("alpha_def", "alpha", scalar, 1),
-            DefaultEdge.from_default_value(
-                "fontproperties_def", "fontproperties", scalar, FontProperties()
-            ),
-            DefaultEdge.from_default_value("usetex_def", "usetex", scalar, False),
-            DefaultEdge.from_default_value("rotation_def", "rotation", scalar, 0),
-            DefaultEdge.from_default_value(
-                "antialiased_def", "antialiased", scalar, False
-            ),
+            *coord_and_default("text", default_value=""),
+            *coord_and_default("color", default_rc="text.color"),
+            *coord_and_default("alpha", default_value=1),
+            *coord_and_default("fontproperties", default_value=FontProperties()),
+            *coord_and_default("usetex", default_rc="text.usetex"),
+            *coord_and_default("rotation", default_value=0),
+            *coord_and_default("antialiased", default_rc="text.antialiased"),
         ]
 
         self._graph = self._graph + Graph(edges)
