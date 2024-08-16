@@ -10,7 +10,8 @@ A 2D image generated using :class:`.containers.FuncContainer` and
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_prototype.wrappers import ImageWrapper
+from data_prototype.artist import CompatibilityAxes
+from data_prototype.image import Image
 from data_prototype.containers import FuncContainer
 
 from matplotlib.colors import Normalize
@@ -19,8 +20,8 @@ from matplotlib.colors import Normalize
 fc = FuncContainer(
     {},
     xyfuncs={
-        "xextent": ((2,), lambda x, y: [x[0], x[-1]]),
-        "yextent": ((2,), lambda x, y: [y[0], y[-1]]),
+        "x": ((2,), lambda x, y: [x[0], x[-1]]),
+        "y": ((2,), lambda x, y: [y[0], y[-1]]),
         "image": (
             ("N", "M"),
             lambda x, y: np.sin(x).reshape(1, -1) * np.cos(y).reshape(-1, 1),
@@ -28,11 +29,14 @@ fc = FuncContainer(
     },
 )
 norm = Normalize(vmin=-1, vmax=1)
-im = ImageWrapper(fc, norm=norm)
+im = Image(fc, norm=norm)
 
-fig, ax = plt.subplots()
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
+
 ax.add_artist(im)
 ax.set_xlim(-5, 5)
 ax.set_ylim(-5, 5)
-fig.colorbar(im)
+# fig.colorbar(im, ax=nax)
 plt.show()

@@ -1,4 +1,5 @@
 from bisect import insort
+from collections import namedtuple
 from typing import Sequence
 from contextlib import contextmanager
 
@@ -235,6 +236,7 @@ class CompatibilityAxes(Artist):
         self.figure = None
         self._clippath = None
         self.zorder = 2
+        self.sticky_edges = namedtuple("Sticky", ["x", "y"])([], [])
 
     @property
     def axes(self):
@@ -249,7 +251,10 @@ class CompatibilityAxes(Artist):
             return
 
         desc: Desc = Desc(("N",), coordinates="data")
+        desc_scal: Desc = Desc((), coordinates="data")
         xy: dict[str, Desc] = {"x": desc, "y": desc}
+        xy_scal: dict[str, Desc] = {"x": desc_scal, "y": desc_scal}
+
         self._graph = Graph(
             [
                 TransformEdge(
@@ -262,6 +267,18 @@ class CompatibilityAxes(Artist):
                     "axes",
                     desc_like(xy, coordinates="axes"),
                     desc_like(xy, coordinates="display"),
+                    transform=self._axes.transAxes,
+                ),
+                TransformEdge(
+                    "data_scal",
+                    xy_scal,
+                    desc_like(xy_scal, coordinates="axes"),
+                    transform=self._axes.transData - self._axes.transAxes,
+                ),
+                TransformEdge(
+                    "axes_scal",
+                    desc_like(xy_scal, coordinates="axes"),
+                    desc_like(xy_scal, coordinates="display"),
                     transform=self._axes.transAxes,
                 ),
                 FuncEdge.from_func(
