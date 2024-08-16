@@ -154,7 +154,11 @@ class Axes(MPLAxes):
 
     def plot(self, *args, scalex=True, scaley=True, data=None, **kwargs):
         kwargs = cbook.normalize_kwargs(kwargs, mlines.Line2D)
-        line_args = [*self._get_lines_mirror(self, *args, data=data, **kwargs)]
+        line_args = [
+            *self._get_lines_mirror(
+                self, *args, data=data, **kwargs, return_kwargs=True
+            )
+        ]
         print(line_args)
         lines = []
         for coord, kws in line_args:

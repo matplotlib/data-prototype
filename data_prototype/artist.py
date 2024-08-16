@@ -1,4 +1,5 @@
 from bisect import insort
+from collections import namedtuple
 from typing import Sequence
 
 import numpy as np
@@ -234,6 +235,7 @@ class CompatibilityAxes(Artist):
         self.figure = None
         self._clippath = None
         self.zorder = 2
+        self.sticky_edges = namedtuple("Sticky", ["x", "y"])([], [])
 
     @property
     def axes(self):
