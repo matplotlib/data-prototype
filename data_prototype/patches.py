@@ -7,10 +7,9 @@ import numpy as np
 
 from .wrappers import ProxyWrapper, _stale_wrapper
 
-from .containers import DataContainer
-
 from .artist import Artist, _renderer_group
 from .description import Desc
+from .containers import DataContainer
 from .conversion_edge import Graph, CoordinateEdge, DefaultEdge
 
 
@@ -19,7 +18,7 @@ class Patch(Artist):
         super().__init__(container, edges, **kwargs)
 
         scalar = Desc((), "display")  # ... this needs thinking...
-        edges = [
+        def_edges = [
             CoordinateEdge.from_coords("xycoords", {"x": "auto", "y": "auto"}, "data"),
             CoordinateEdge.from_coords("codes", {"codes": "auto"}, "display"),
             CoordinateEdge.from_coords("facecolor", {"color": Desc(())}, "display"),
@@ -34,12 +33,11 @@ class Patch(Artist):
             DefaultEdge.from_default_value("alpha_def", "alpha", scalar, 1),
             DefaultEdge.from_default_value("hatch_def", "hatch", scalar, None),
         ]
-        self._graph = self._graph + Graph(edges)
+        self._graph = self._graph + Graph(def_edges)
 
     def draw(self, renderer, graph: Graph) -> None:
         if not self.get_visible():
             return
-        g = graph + self._graph
         desc = Desc(("N",), "display")
         scalar = Desc((), "display")  # ... this needs thinking...
 
@@ -55,18 +53,14 @@ class Patch(Artist):
             "alpha": scalar,
         }
 
-        # copy from line
-        conv = g.evaluator(self._container.describe(), require)
-        query, _ = self._container.query(g)
-        evald = conv.evaluate(query)
-
-        clip_conv = g.evaluator(
-            self._clip_box.describe(),
-            {"x": Desc(("N",), "display"), "y": Desc(("N",), "display")},
+        evald = self._query_and_eval(
+            self._container, require, graph, cacheset="default"
         )
-        clip_query, _ = self._clip_box.query(g)
-        clipx, clipy = clip_conv.evaluate(clip_query).values()
-        # copy from line
+
+        clip_req = {"x": Desc(("N",), "display"), "y": Desc(("N",), "display")}
+        clipx, clipy = self._query_and_eval(
+            self._clip_box, clip_req, graph, cacheset="clip"
+        ).values()
 
         path = mpath.Path._fast_from_codes_and_verts(
             verts=np.vstack([evald["x"], evald["y"]]).T, codes=evald["codes"]
@@ -109,6 +103,14 @@ class Patch(Artist):
                 mcolors.to_rgba(evald["facecolor"]),
             )
             gc.restore()
+
+
+class RectangleContainer(DataContainer): ...
+
+
+class Rectangle(Patch):
+    def __init__(self, container, edges=None, **kwargs):
+        super().__init__(container, edges, **kwargs)
 
 
 class PatchWrapper(ProxyWrapper):

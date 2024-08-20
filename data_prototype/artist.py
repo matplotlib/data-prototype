@@ -1,4 +1,5 @@
 from bisect import insort
+from collections import OrderedDict
 from typing import Sequence
 from contextlib import contextmanager
 
@@ -32,6 +33,8 @@ class Artist:
             {"x": "parent", "y": "parent"},
             **{"x": np.asarray([0, 1]), "y": np.asarray([0, 1])}
         )
+
+        self._caches = {}
 
     def draw(self, renderer, graph: Graph) -> None:
         return
@@ -118,6 +121,31 @@ class Artist:
                 # also check that ax is None so that it traverse objects
                 # which do not have an axes property but children might
                 a.pick(mouseevent, graph)
+
+    def _get_dynamic_graph(self, query):
+        return Graph([])
+
+    def _query_and_eval(self, container, requires, graph, cacheset=None):
+        g = graph + self._graph
+        query, q_cache_key = container.query(g)
+        g = g + self._get_dynamic_graph(query)
+        g_cache_key = g.cache_key()
+        cache_key = (g_cache_key, q_cache_key)
+
+        cache = None
+        if cacheset is not None:
+            cache = self._caches.setdefault(cacheset, OrderedDict())
+            if cache_key in cache:
+                return cache[cache_key]
+
+        conv = g.evaluator(container.describe(), requires)
+        ret = conv.evaluate(query)
+
+        if cache is not None:
+            cache[cache_key] = ret
+            # TODO prune
+
+        return ret
 
 
 class CompatibilityArtist:
