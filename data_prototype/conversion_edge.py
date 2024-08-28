@@ -418,3 +418,12 @@ class Graph:
         aother = {k: v for k, v in other._aliases}
         aliases = tuple((aself | aother).items())
         return Graph(self._edges + other._edges, aliases)
+
+    def cache_key(self):
+        """A cache key representing the graph.
+
+        Current implementation is a new UUID, that is to say uncachable.
+        """
+        import uuid
+
+        return str(uuid.uuid4())
