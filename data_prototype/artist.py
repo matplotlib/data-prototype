@@ -122,13 +122,13 @@ class Artist:
                 # which do not have an axes property but children might
                 a.pick(mouseevent, graph)
 
-    def _get_dynamic_graph(self, query):
+    def _get_dynamic_graph(self, query, description, graph):
         return Graph([])
 
     def _query_and_eval(self, container, requires, graph, cacheset=None):
         g = graph + self._graph
         query, q_cache_key = container.query(g)
-        g = g + self._get_dynamic_graph(query)
+        g = g + self._get_dynamic_graph(query, container.describe(), graph)
         g_cache_key = g.cache_key()
         cache_key = (g_cache_key, q_cache_key)
 
@@ -141,9 +141,9 @@ class Artist:
         conv = g.evaluator(container.describe(), requires)
         ret = conv.evaluate(query)
 
-        if cache is not None:
-            cache[cache_key] = ret
-            # TODO prune
+        # TODO: actually add to cache and prune
+        # if cache is not None:
+        #     cache[cache_key] = ret
 
         return ret
 
