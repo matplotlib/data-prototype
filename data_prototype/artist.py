@@ -122,13 +122,13 @@ class Artist:
                 # which do not have an axes property but children might
                 a.pick(mouseevent, graph)
 
-    def _get_dynamic_graph(self, query, description, graph):
+    def _get_dynamic_graph(self, query, description, graph, cacheset):
         return Graph([])
 
     def _query_and_eval(self, container, requires, graph, cacheset=None):
         g = graph + self._graph
         query, q_cache_key = container.query(g)
-        g = g + self._get_dynamic_graph(query, container.describe(), graph)
+        g = g + self._get_dynamic_graph(query, container.describe(), graph, cacheset)
         g_cache_key = g.cache_key()
         cache_key = (g_cache_key, q_cache_key)
 

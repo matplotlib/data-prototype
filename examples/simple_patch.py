@@ -12,53 +12,63 @@ Demonstrates :class:`.patches.RectangleWrapper` using
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 from data_prototype.containers import ArrayContainer
+from data_prototype.artist import CompatibilityAxes
 
-from data_prototype.patches import RectangleWrapper
+from data_prototype.patches import Rectangle
 
 cont1 = ArrayContainer(
-    x=np.array([-3]),
-    y=np.array([0]),
-    width=np.array([2]),
-    height=np.array([3]),
-    angle=np.array([0]),
-    rotation_point=np.array(["center"]),
+    lower_left_x=np.array(-3),
+    lower_left_y=np.array(0),
+    upper_right_x=np.array(-1),
+    upper_right_y=np.array(3),
     edgecolor=np.array([0, 0, 0]),
-    facecolor=np.array([0.0, 0.7, 0, 0.5]),
-    linewidth=np.array([3]),
-    linestyle=np.array(["-"]),
+    hatch_color=np.array([0, 0, 0]),
+    facecolor="green",
+    linewidth=3,
+    linestyle="-",
     antialiased=np.array([True]),
-    hatch=np.array(["*"]),
+    hatch="*",
+    fill=np.array([True]),
+    capstyle=np.array(["round"]),
+    joinstyle=np.array(["miter"]),
+    alpha=np.array(0.5),
+)
+
+cont2 = ArrayContainer(
+    lower_left_x=0,
+    lower_left_y=np.array(1),
+    upper_right_x=np.array(2),
+    upper_right_y=np.array(5),
+    angle=30,
+    rotation_point_x=np.array(1),
+    rotation_point_y=np.array(3.5),
+    edgecolor=np.array([0.5, 0.2, 0]),
+    hatch_color=np.array([0, 0, 0]),
+    facecolor="red",
+    linewidth=6,
+    linestyle="-",
+    antialiased=np.array([True]),
+    hatch="",
     fill=np.array([True]),
     capstyle=np.array(["round"]),
     joinstyle=np.array(["miter"]),
 )
 
-cont2 = ArrayContainer(
-    x=np.array([0]),
-    y=np.array([1]),
-    width=np.array([2]),
-    height=np.array([3]),
-    angle=np.array([30]),
-    rotation_point=np.array(["center"]),
-    edgecolor=np.array([0, 0, 0]),
-    facecolor=np.array([0.7, 0, 0]),
-    linewidth=np.array([6]),
-    linestyle=np.array(["-"]),
-    antialiased=np.array([True]),
-    hatch=np.array([""]),
-    fill=np.array([True]),
-    capstyle=np.array(["butt"]),
-    joinstyle=np.array(["round"]),
-)
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
+nax.set_xlim(-5, 5)
+nax.set_ylim(0, 5)
 
-fig, ax = plt.subplots()
-ax.set_xlim(-5, 5)
-ax.set_ylim(0, 5)
-rect1 = RectangleWrapper(cont1, {})
-rect2 = RectangleWrapper(cont2, {})
+rect = mpatches.Rectangle((4, 1), 2, 3, linewidth=6, edgecolor="black", angle=30)
+nax.add_artist(rect)
+
+rect1 = Rectangle(cont1, {})
+rect2 = Rectangle(cont2, {})
 ax.add_artist(rect1)
 ax.add_artist(rect2)
-ax.set_aspect(1)
+nax.set_aspect(1)
 plt.show()
