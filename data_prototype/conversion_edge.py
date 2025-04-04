@@ -7,7 +7,7 @@ from queue import PriorityQueue
 from typing import Any
 import numpy as np
 
-from data_prototype.description import Desc, desc_like
+from data_prototype.description import Desc, desc_like, ShapeSpec
 
 from matplotlib.transforms import Transform
 
@@ -112,6 +112,17 @@ class DefaultEdge(Edge):
     ) -> "DefaultEdge":
         return cls(name, {}, {key: output}, weight, invertable=False, value=value)
 
+    @classmethod
+    def from_rc(
+        cls, rc_name: str, key: str | None = None, coordinates: str = "display"
+    ):
+        from matplotlib import rcParams
+
+        if key is None:
+            key = rc_name.split(".")[-1]
+        scalar = Desc((), coordinates)
+        return cls.from_default_value(f"{rc_name}_rc", key, scalar, rcParams[rc_name])
+
     def evaluate(self, input: dict[str, Any]) -> dict[str, Any]:
         return {k: self.value for k in self.output}
 
@@ -165,7 +176,6 @@ class FuncEdge(Edge):
 
     @property
     def inverse(self) -> "FuncEdge":
-
         if self.inverse_func is None:
             raise RuntimeError("Trying to invert a non-invertable edge")
 
@@ -327,6 +337,7 @@ class Graph:
                 import matplotlib.pyplot as plt
 
                 self.visualize(input)
+                self.visualize()
                 plt.show()
                 raise NotImplementedError(
                     "This may be possible, but is not a simple case already considered"
@@ -344,7 +355,7 @@ class Graph:
             else:
                 out_edges.append(SequenceEdge.from_edges("eval", edges, output_subset))
 
-        found_outputs = set()
+        found_outputs = set(input)
         for out in out_edges:
             found_outputs |= set(out.output)
         if missing := set(output) - found_outputs:
@@ -372,7 +383,6 @@ class Graph:
         G = nx.DiGraph()
 
         if input is not None:
-
             for _, edges in self._subgraphs:
                 q: list[dict[str, Desc]] = [input]
                 explored: set[tuple[tuple[str, str], ...]] = set()
@@ -427,3 +437,25 @@ class Graph:
         import uuid
 
         return str(uuid.uuid4())
+
+
+def coord_and_default(
+    key: str,
+    shape: ShapeSpec = (),
+    coordinates: str = "display",
+    default_value: Any = None,
+    default_rc: str | None = None,
+):
+    if default_rc is not None:
+        if default_value is not None:
+            raise ValueError(
+                "Only one of 'default_value' and 'default_rc' may be specified"
+            )
+        def_edge = DefaultEdge.from_rc(default_rc, key, coordinates)
+    else:
+        scalar = Desc((), coordinates)
+        def_edge = DefaultEdge.from_default_value(
+            f"{key}_def", key, scalar, default_value
+        )
+    coord_edge = CoordinateEdge.from_coords(key, {key: Desc(shape)}, coordinates)
+    return coord_edge, def_edge

@@ -76,6 +76,14 @@ class Image(Artist):
                 {"image": Desc(("O", "P", 4), "rgba_resampled")},
                 {"image": Desc(("O", "P", 4), "display")},
             ),
+            FuncEdge.from_func(
+                "rgb_rgba",
+                lambda image: np.append(
+                    image, np.ones(image.shape[:-1] + (1,)), axis=-1
+                ),
+                {"image": Desc(("M", "N", 3), "rgb")},
+                {"image": Desc(("M", "N", 4), "rgba")},
+            ),
             self._interpolation_edge,
         ]
 

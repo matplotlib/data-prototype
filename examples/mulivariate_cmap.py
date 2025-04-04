@@ -11,9 +11,11 @@ of each pixel.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_prototype.wrappers import ImageWrapper
+from data_prototype.image import Image
+from data_prototype.artist import CompatibilityAxes
+from data_prototype.description import Desc
 from data_prototype.containers import FuncContainer
-from data_prototype.conversion_node import FunctionConversionNode
+from data_prototype.conversion_edge import FuncEdge
 
 from matplotlib.colors import hsv_to_rgb
 
@@ -35,15 +37,24 @@ def image_nu(image):
 fc = FuncContainer(
     {},
     xyfuncs={
-        "xextent": ((2,), lambda x, y: [x[0], x[-1]]),
-        "yextent": ((2,), lambda x, y: [y[0], y[-1]]),
+        "x": ((2,), lambda x, y: [x[0], x[-1]]),
+        "y": ((2,), lambda x, y: [y[0], y[-1]]),
         "image": (("N", "M", 2), func),
     },
 )
 
-im = ImageWrapper(fc, FunctionConversionNode.from_funcs({"image": image_nu}))
+image_edges = FuncEdge.from_func(
+    "image",
+    image_nu,
+    {"image": Desc(("M", "N", 2), "auto")},
+    {"image": Desc(("M", "N", 3), "rgb")},
+)
 
-fig, ax = plt.subplots()
+im = Image(fc, [image_edges])
+
+fig, nax = plt.subplots()
+ax = CompatibilityAxes(nax)
+nax.add_artist(ax)
 ax.add_artist(im)
 ax.set_xlim(-5, 5)
 ax.set_ylim(-5, 5)
