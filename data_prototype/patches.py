@@ -7,11 +7,10 @@ import numpy as np
 
 from .wrappers import ProxyWrapper, _stale_wrapper
 
-from .containers import DataContainer
-
 from .artist import Artist, _renderer_group
-from .description import Desc
-from .conversion_edge import Graph, CoordinateEdge, DefaultEdge
+from .description import Desc, desc_like
+from .containers import DataContainer
+from .conversion_edge import Graph, CoordinateEdge, DefaultEdge, TransformEdge
 
 
 class Patch(Artist):
@@ -19,11 +18,17 @@ class Patch(Artist):
         super().__init__(container, edges, **kwargs)
 
         scalar = Desc((), "display")  # ... this needs thinking...
-        edges = [
+        def_edges = [
             CoordinateEdge.from_coords("xycoords", {"x": "auto", "y": "auto"}, "data"),
             CoordinateEdge.from_coords("codes", {"codes": "auto"}, "display"),
-            CoordinateEdge.from_coords("facecolor", {"color": Desc(())}, "display"),
-            CoordinateEdge.from_coords("edgecolor", {"color": Desc(())}, "display"),
+            CoordinateEdge.from_coords("facecolor", {"facecolor": Desc(())}, "display"),
+            CoordinateEdge.from_coords("edgecolor", {"edgecolor": Desc(())}, "display"),
+            CoordinateEdge.from_coords(
+                "facecolor_rgba", {"facecolor": Desc(("M",))}, "display"
+            ),
+            CoordinateEdge.from_coords(
+                "edgecolor_rgba", {"edgecolor": Desc(("M",))}, "display"
+            ),
             CoordinateEdge.from_coords("linewidth", {"linewidth": Desc(())}, "display"),
             CoordinateEdge.from_coords("hatch", {"hatch": Desc(())}, "display"),
             CoordinateEdge.from_coords("alpha", {"alpha": Desc(())}, "display"),
@@ -34,12 +39,11 @@ class Patch(Artist):
             DefaultEdge.from_default_value("alpha_def", "alpha", scalar, 1),
             DefaultEdge.from_default_value("hatch_def", "hatch", scalar, None),
         ]
-        self._graph = self._graph + Graph(edges)
+        self._graph = self._graph + Graph(def_edges)
 
     def draw(self, renderer, graph: Graph) -> None:
         if not self.get_visible():
             return
-        g = graph + self._graph
         desc = Desc(("N",), "display")
         scalar = Desc((), "display")  # ... this needs thinking...
 
@@ -47,26 +51,22 @@ class Patch(Artist):
             "x": desc,
             "y": desc,
             "codes": desc,
-            "facecolor": scalar,
-            "edgecolor": scalar,
+            "facecolor": Desc((), "display"),
+            "edgecolor": Desc(("M",), "display"),
             "linewidth": scalar,
             "linestyle": scalar,
             "hatch": scalar,
             "alpha": scalar,
         }
 
-        # copy from line
-        conv = g.evaluator(self._container.describe(), require)
-        query, _ = self._container.query(g)
-        evald = conv.evaluate(query)
-
-        clip_conv = g.evaluator(
-            self._clip_box.describe(),
-            {"x": Desc(("N",), "display"), "y": Desc(("N",), "display")},
+        evald = self._query_and_eval(
+            self._container, require, graph, cacheset="default"
         )
-        clip_query, _ = self._clip_box.query(g)
-        clipx, clipy = clip_conv.evaluate(clip_query).values()
-        # copy from line
+
+        clip_req = {"x": Desc(("N",), "display"), "y": Desc(("N",), "display")}
+        clipx, clipy = self._query_and_eval(
+            self._clip_box, clip_req, graph, cacheset="clip"
+        ).values()
 
         path = mpath.Path._fast_from_codes_and_verts(
             verts=np.vstack([evald["x"], evald["y"]]).T, codes=evald["codes"]
@@ -75,7 +75,7 @@ class Patch(Artist):
         with _renderer_group(renderer, "patch", None):
             gc = renderer.new_gc()
 
-            gc.set_foreground(evald["facecolor"], isRGBA=False)
+            gc.set_foreground(evald["edgecolor"], isRGBA=False)
             gc.set_clip_rectangle(
                 mtransforms.Bbox.from_extents(clipx[0], clipy[0], clipx[1], clipy[1])
             )
@@ -109,6 +109,190 @@ class Patch(Artist):
                 mcolors.to_rgba(evald["facecolor"]),
             )
             gc.restore()
+
+
+class RectangleContainer(DataContainer): ...
+
+
+class Rectangle(Patch):
+    def __init__(self, container, edges=None, **kwargs):
+        super().__init__(container, edges, **kwargs)
+
+        rect = mpath.Path.unit_rectangle()
+
+        desc = Desc((4,), "abstract_path")
+        scalar = Desc((), "data")
+        scalar_auto = Desc(())
+        def_edges = [
+            CoordinateEdge.from_coords(
+                "llxycoords",
+                {"lower_left_x": scalar_auto, "lower_left_y": scalar_auto},
+                "data",
+            ),
+            CoordinateEdge.from_coords(
+                "urxycoords",
+                {"upper_right_x": scalar_auto, "upper_right_y": scalar_auto},
+                "data",
+            ),
+            CoordinateEdge.from_coords(
+                "rpxycoords",
+                {"rotation_point_x": scalar_auto, "rotation_point_y": scalar_auto},
+                "data",
+            ),
+            CoordinateEdge.from_coords("anglecoords", {"angle": scalar_auto}, "data"),
+            DefaultEdge.from_default_value(
+                "x_def", "x", desc, rect.vertices.T[0], weight=0.1
+            ),
+            DefaultEdge.from_default_value(
+                "y_def", "y", desc, rect.vertices.T[1], weight=0.1
+            ),
+            DefaultEdge.from_default_value(
+                "codes_def",
+                "codes",
+                desc_like(desc, coordinates="display"),
+                rect.codes,
+                weight=0.1,
+            ),
+            DefaultEdge.from_default_value("angle_def", "angle", scalar, 0),
+            DefaultEdge.from_default_value(
+                "rotation_point_x_def", "rotation_point_x", scalar, 0
+            ),
+            DefaultEdge.from_default_value(
+                "rotation_point_y_def", "rotation_point_y", scalar, 0
+            ),
+        ]
+
+        self._graph = self._graph + Graph(def_edges)
+
+    def _get_dynamic_graph(self, query, description, graph, cacheset):
+        if cacheset == "clip":
+            return Graph([])
+
+        desc = Desc((), "data")
+
+        requires = {
+            "upper_right_x": desc,
+            "upper_right_y": desc,
+            "lower_left_x": desc,
+            "lower_left_y": desc,
+            "angle": desc,
+            "rotation_point_x": desc,
+            "rotation_point_y": desc,
+        }
+
+        g = graph + self._graph
+
+        conv = g.evaluator(description, requires)
+        evald = conv.evaluate(query)
+
+        bbox = mtransforms.Bbox.from_extents(
+            evald["lower_left_x"],
+            evald["lower_left_y"],
+            evald["upper_right_x"],
+            evald["upper_right_y"],
+        )
+        rotation_point = (evald["rotation_point_x"], evald["rotation_point_y"])
+
+        scale = mtransforms.BboxTransformTo(bbox)
+        rotate = (
+            mtransforms.Affine2D()
+            .translate(-rotation_point[0], -rotation_point[1])
+            .rotate_deg(evald["angle"])
+            .translate(*rotation_point)
+        )
+
+        descn: Desc = Desc(("N",), coordinates="data")
+        xy: dict[str, Desc] = {"x": descn, "y": descn}
+        edges = [
+            TransformEdge(
+                "scale_and_rotate",
+                desc_like(xy, coordinates="abstract_path"),
+                xy,
+                transform=scale + rotate,
+            )
+        ]
+
+        return Graph(edges)
+
+
+class RegularPolygon(Patch):
+    def __init__(self, container, edges=None, **kwargs):
+        super().__init__(container, edges, **kwargs)
+
+        scalar = Desc((), "data")
+        scalar_auto = Desc(())
+        def_edges = [
+            CoordinateEdge.from_coords(
+                "centercoords",
+                {"center_x": scalar_auto, "center_y": scalar_auto},
+                "data",
+            ),
+            CoordinateEdge.from_coords(
+                "orientationcoords", {"orientation": scalar_auto}, "data"
+            ),
+            CoordinateEdge.from_coords("radiuscoords", {"radius": scalar_auto}, "data"),
+            CoordinateEdge.from_coords(
+                "num_vertices_coords", {"num_vertices": scalar_auto}, "data"
+            ),
+            DefaultEdge.from_default_value("orientation_def", "orientation", scalar, 0),
+            DefaultEdge.from_default_value("radius_def", "radius", scalar, 5),
+        ]
+
+        self._graph = self._graph + Graph(def_edges)
+
+    def _get_dynamic_graph(self, query, description, graph, cacheset):
+        if cacheset == "clip":
+            return Graph([])
+
+        desc = Desc((), "data")
+        desc_abs = Desc(("N",), "abstract_path")
+
+        requires = {
+            "center_x": desc,
+            "center_y": desc,
+            "radius": desc,
+            "orientation": desc,
+            "num_vertices": desc,
+        }
+
+        g = graph + self._graph
+
+        conv = g.evaluator(description, requires)
+        evald = conv.evaluate(query)
+
+        circ = mpath.Path.unit_regular_polygon(evald["num_vertices"])
+
+        scale = mtransforms.Affine2D().scale(evald["radius"])
+        rotate = mtransforms.Affine2D().rotate(evald["orientation"])
+        translate = mtransforms.Affine2D().translate(
+            evald["center_x"], evald["center_y"]
+        )
+
+        descn: Desc = Desc(("N",), coordinates="data")
+        xy: dict[str, Desc] = {"x": descn, "y": descn}
+        edges = [
+            TransformEdge(
+                "scale_and_rotate",
+                desc_like(xy, coordinates="abstract_path"),
+                xy,
+                transform=scale + rotate + translate,
+            ),
+            DefaultEdge.from_default_value(
+                "x_def", "x", desc_abs, circ.vertices.T[0], weight=0.1
+            ),
+            DefaultEdge.from_default_value(
+                "y_def", "y", desc_abs, circ.vertices.T[1], weight=0.1
+            ),
+            DefaultEdge.from_default_value(
+                "codes_def",
+                "codes",
+                desc_like(desc_abs, coordinates="display"),
+                circ.codes,
+                weight=0.1,
+            ),
+        ]
+
+        return Graph(edges)
 
 
 class PatchWrapper(ProxyWrapper):
