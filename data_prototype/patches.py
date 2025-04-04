@@ -51,8 +51,8 @@ class Patch(Artist):
             "x": desc,
             "y": desc,
             "codes": desc,
-            "facecolor": Desc((), "display"),
-            "edgecolor": Desc(("M",), "display"),
+            "facecolor": scalar,
+            "edgecolor": scalar,
             "linewidth": scalar,
             "linestyle": scalar,
             "hatch": scalar,
@@ -93,7 +93,7 @@ class Patch(Artist):
 
             if evald["hatch"] is not None:
                 gc.set_hatch(evald["hatch"])
-                gc.set_hatch_color(evald["hatch_color"])
+                # gc.set_hatch_color(evald["hatch_color"])
 
             # if self.get_sketch_params() is not None:
             #     gc.set_sketch_params(*self.get_sketch_params())
