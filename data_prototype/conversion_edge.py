@@ -176,7 +176,6 @@ class FuncEdge(Edge):
 
     @property
     def inverse(self) -> "FuncEdge":
-
         if self.inverse_func is None:
             raise RuntimeError("Trying to invert a non-invertable edge")
 
@@ -384,7 +383,6 @@ class Graph:
         G = nx.DiGraph()
 
         if input is not None:
-
             for _, edges in self._subgraphs:
                 q: list[dict[str, Desc]] = [input]
                 explored: set[tuple[tuple[str, str], ...]] = set()
@@ -439,6 +437,7 @@ class Graph:
         import uuid
 
         return str(uuid.uuid4())
+
 
 def coord_and_default(
     key: str,
