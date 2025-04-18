@@ -372,7 +372,20 @@ class Graph:
         return SequenceEdge.from_edges("eval", out_edges, output)
 
     def visualize(self, input: dict[str, Desc] | None = None):
-        import networkx as nx
+        if input is None:
+            from .introspection import draw_graph
+
+            draw_graph(self)
+            return
+
+        try:
+            import networkx as nx
+        except ImportError:
+            from .introspection import draw_graph
+
+            draw_graph(self)
+            return
+
         import matplotlib.pyplot as plt
 
         from pprint import pformat
@@ -382,38 +395,26 @@ class Graph:
 
         G = nx.DiGraph()
 
-        if input is not None:
-            for _, edges in self._subgraphs:
-                q: list[dict[str, Desc]] = [input]
-                explored: set[tuple[tuple[str, str], ...]] = set()
-                explored.add(
-                    tuple(sorted(((k, v.coordinates) for k, v in q[0].items())))
-                )
-                G.add_node(node_format(q[0]))
-                while q:
-                    n = q.pop()
-                    for e in edges:
-                        if Desc.compatible(n, e.input):
-                            w = n | e.output
-                            if node_format(w) not in G:
-                                G.add_node(node_format(w))
-                                explored.add(
-                                    tuple(
-                                        sorted(
-                                            ((k, v.coordinates) for k, v in w.items())
-                                        )
-                                    )
+        for _, edges in self._subgraphs:
+            q: list[dict[str, Desc]] = [input]
+            explored: set[tuple[tuple[str, str], ...]] = set()
+            explored.add(tuple(sorted(((k, v.coordinates) for k, v in q[0].items()))))
+            G.add_node(node_format(q[0]))
+            while q:
+                n = q.pop()
+                for e in edges:
+                    if Desc.compatible(n, e.input):
+                        w = n | e.output
+                        if node_format(w) not in G:
+                            G.add_node(node_format(w))
+                            explored.add(
+                                tuple(
+                                    sorted(((k, v.coordinates) for k, v in w.items()))
                                 )
-                                q.append(w)
-                            if node_format(w) != node_format(n):
-                                G.add_edge(node_format(n), node_format(w), name=e.name)
-        else:
-            # don't bother separating subgraphs,as the end result is exactly the same here
-            for edge in self._edges:
-                G.add_edge(
-                    node_format(edge.input), node_format(edge.output), name=edge.name
-                )
-
+                            )
+                            q.append(w)
+                        if node_format(w) != node_format(n):
+                            G.add_edge(node_format(n), node_format(w), name=e.name)
         try:
             pos = nx.shell_layout(G)
         except Exception:
