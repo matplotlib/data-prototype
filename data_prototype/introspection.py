@@ -34,7 +34,7 @@ class VisEdge:
 
 
 def _position_subgraph(
-    subgraph: tuple(set[str], list[Edge])
+    subgraph: tuple(set[str], list[Edge]),
 ) -> tuple[list[VisNode], list[VisEdge]]:
     # Build graph
     nodes: list[VisNode] = []
