@@ -113,30 +113,49 @@ def _position_subgraph(
     return nodes, edges
 
 
-def draw_graph(graph: Graph, ax=None):
+def draw_graph(graph: Graph, ax=None, *, adjust_axes=None):
     if ax is None:
         fig, ax = plt.subplots()
+        if adjust_axes is None:
+            adjust_axes = True
+
+    inverted = adjust_axes or ax.yaxis.get_inverted()
 
     origin_y = 0
+    xmax = 0
 
     for sg in graph._subgraphs:
         nodes, edges = _position_subgraph(sg)
+        annotations = {}
         # Draw nodes
         for node in nodes:
-            ax.annotate(
-                node.format(), (node.x, node.y + origin_y), bbox={"boxstyle": "round"}
+            annotations[node.format()] = ax.annotate(
+                node.format(),
+                (node.x, node.y + origin_y),
+                ha="center",
+                va="center",
+                bbox={"boxstyle": "round", "facecolor": "none"},
             )
 
         # Draw edges
         for edge in edges:
-            ax.annotate(
+            arr = ax.annotate(
                 "",
-                (edge.child.x, edge.child.y + origin_y),
-                (edge.parent.x, edge.parent.y + origin_y),
+                (0.5, 1.05 if inverted else -0.05),
+                (0.5, -0.05 if inverted else 1.05),
+                xycoords=annotations[edge.child.format()],
+                textcoords=annotations[edge.parent.format()],
                 arrowprops={"arrowstyle": "->"},
+                annotation_clip=True,
             )
-            mid_x = (edge.child.x + edge.parent.x) / 2
-            mid_y = (edge.child.y + edge.parent.y) / 2
-            ax.text(mid_x, mid_y + origin_y, edge.name)
+            ax.annotate(edge.name, (0.5, 0.5), xytext=(0.5, 0.5), textcoords=arr)
 
         origin_y += max(node.y for node in nodes) + 1
+        xmax = max(xmax, max(node.x for node in nodes))
+
+    if adjust_axes:
+        ax.set_ylim(origin_y, -1)
+        ax.set_xlim(-1, xmax + 1)
+        ax.spines[:].set_visible(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
