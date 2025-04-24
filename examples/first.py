@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.line import Line
-from data_prototype.containers import FuncContainer, SeriesContainer
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.line import Line
+from mpl_data_containers.containers import FuncContainer, SeriesContainer
 
 
 fc = FuncContainer({"x": (("N",), lambda x: x), "y": (("N",), lambda x: np.sin(1 / x))})

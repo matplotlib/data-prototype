@@ -12,9 +12,9 @@ x, y, and path codes.
 import matplotlib.pyplot as plt
 
 
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.patches import Patch
-from data_prototype.containers import ArrayContainer
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.patches import Patch
+from mpl_data_containers.containers import ArrayContainer
 
 from matplotlib.path import Path
 

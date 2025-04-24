@@ -13,9 +13,9 @@ The mandelbrot recomputes as it is zoomed in and/or panned.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.image import Image
-from data_prototype.containers import FuncContainer
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.image import Image
+from mpl_data_containers.containers import FuncContainer
 
 from matplotlib.colors import Normalize
 

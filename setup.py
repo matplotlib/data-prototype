@@ -9,7 +9,7 @@ import sys
 min_version = (3, 10)
 if sys.version_info < min_version:
     error = """
-data_prototype does not support Python {0}.{1}.
+mpl_data_containers does not support Python {0}.{1}.
 Python {2}.{3} and above is required. Check your Python version like so:
 
 python3 --version
@@ -38,12 +38,12 @@ with open(path.join(here, "requirements.txt")) as requirements_file:
 
 
 setup(
-    name="data_prototype",
+    name="mpl_data_containers",
     description="Experimental code for the upcoming Matplotlib data refactor.",
     long_description=readme,
-    author="Thomas A Caswell",
-    author_email="tcaswell@gmail.com",
-    url="https://github.com/tacaswell/data_prototype",
+    author="Kyle Sunden",
+    author_email="pypi@ksunden.space",
+    url="https://github.com/matplotlib/data-prototype",
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
     packages=find_packages(exclude=["docs", "tests"]),
     entry_points={
@@ -59,12 +59,12 @@ setup(
     use_scm_version={
         "version_scheme": "release-branch-semver",
         "local_scheme": "node-and-date",
-        "write_to": "data_prototype/_version.py",
+        "write_to": "mpl_data_containers/_version.py",
         "fallback_version": "0.0+UNKNOWN",
     },
     include_package_data=True,
     package_data={
-        "data_prototype": [
+        "mpl_data_containers": [
             # When adding files here, remember to update MANIFEST.in as well,
             # or else they will not be included in the distribution on PyPI!
             # 'path/to/data_file',

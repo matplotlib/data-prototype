@@ -12,12 +12,12 @@ import numpy as np
 
 from matplotlib.colors import Normalize
 
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.line import Line
-from data_prototype.containers import ArrayContainer
-from data_prototype.description import Desc
-from data_prototype.conversion_edge import FuncEdge
-from data_prototype.text import Text
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.line import Line
+from mpl_data_containers.containers import ArrayContainer
+from mpl_data_containers.description import Desc
+from mpl_data_containers.conversion_edge import FuncEdge
+from mpl_data_containers.text import Text
 
 
 cmap = plt.colormaps["viridis"]

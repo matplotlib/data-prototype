@@ -7,7 +7,7 @@ API
 Containers
 ==========
 
-.. automodule:: data_prototype.containers
+.. automodule:: mpl_data_containers.containers
    :members:
    :undoc-members:
 
@@ -16,10 +16,10 @@ Containers
 Wrappers
 ========
 
-.. automodule:: data_prototype.wrappers
+.. automodule:: mpl_data_containers.wrappers
    :members:
    :undoc-members:
 
-.. automodule:: data_prototype.patches
+.. automodule:: mpl_data_containers.patches
    :members:
    :undoc-members:

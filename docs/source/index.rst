@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-data_prototype Documentation
+mpl_data_containers Documentation
 ============================
 
 This is prototype development for the next generation of data structures for

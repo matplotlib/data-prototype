@@ -18,10 +18,10 @@ from matplotlib.collections import (
 )
 from matplotlib.artist import Artist as _Artist
 
-from data_prototype.containers import DataContainer, _MatplotlibTransform
-from data_prototype.description import Desc, desc_like
-from data_prototype.conversion_edge import TransformEdge, Graph
-from data_prototype.conversion_node import (
+from mpl_data_containers.containers import DataContainer, _MatplotlibTransform
+from mpl_data_containers.description import Desc, desc_like
+from mpl_data_containers.conversion_edge import TransformEdge, Graph
+from mpl_data_containers.conversion_node import (
     ConversionNode,
     RenameConversionNode,
     evaluate_pipeline,

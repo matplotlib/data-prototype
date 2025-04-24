@@ -11,11 +11,11 @@ of each pixel.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_prototype.image import Image
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.description import Desc
-from data_prototype.containers import FuncContainer
-from data_prototype.conversion_edge import FuncEdge
+from mpl_data_containers.image import Image
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.description import Desc
+from mpl_data_containers.containers import FuncContainer
+from mpl_data_containers.conversion_edge import FuncEdge
 
 from matplotlib.colors import hsv_to_rgb
 

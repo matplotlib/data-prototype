@@ -10,8 +10,8 @@ to provide a histogram which recomputes the bins based on a range selected.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_prototype.wrappers import StepWrapper
-from data_prototype.containers import HistContainer
+from mpl_data_containers.wrappers import StepWrapper
+from mpl_data_containers.containers import HistContainer
 
 hc = HistContainer(
     np.concatenate([np.random.randn(5000), 0.1 * np.random.randn(500) + 5]), 25

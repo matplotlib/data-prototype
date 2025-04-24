@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-from data_prototype.wrappers import ErrorbarWrapper
-from data_prototype.containers import ArrayContainer
+from mpl_data_containers.wrappers import ErrorbarWrapper
+from mpl_data_containers.containers import ArrayContainer
 
 x = np.arange(10)
 y = x**2

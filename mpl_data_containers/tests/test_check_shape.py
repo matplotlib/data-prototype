@@ -1,6 +1,6 @@
 import pytest
 
-from data_prototype.description import Desc
+from mpl_data_containers.description import Desc
 
 
 @pytest.mark.parametrize(

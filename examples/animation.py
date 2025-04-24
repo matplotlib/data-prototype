@@ -17,14 +17,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.conversion_edge import Graph
-from data_prototype.description import Desc
+from mpl_data_containers.conversion_edge import Graph
+from mpl_data_containers.description import Desc
 
 
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.line import Line
-from data_prototype.text import Text
-from data_prototype.conversion_edge import FuncEdge
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.line import Line
+from mpl_data_containers.text import Text
+from mpl_data_containers.conversion_edge import FuncEdge
 
 
 class SinOfTime:
