@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 mpl_data_containers Documentation
-============================
+=================================
 
 This is prototype development for the next generation of data structures for
 Matplotlib.  This is the version "to throw away".  Everything in this
