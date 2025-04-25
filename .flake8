@@ -5,7 +5,7 @@ exclude =
     build,
     dist,
     versioneer.py,
-    data_prototype/_version.py,
+    mpl_data_containers/_version.py,
     docs/source/conf.py
     setup.py
     .eggs
