@@ -1,6 +1,6 @@
-==============
-data_prototype
-==============
+===================
+mpl_data_containers
+===================
 
 Experimental code for the upcoming Matplotlib data refactor.
 

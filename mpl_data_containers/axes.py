@@ -19,7 +19,7 @@ from .wrappers import PathCollectionWrapper
 
 class Axes(MPLAxes):
     # Name for registering as a projection so we can experiment with it
-    name = "data-prototype"
+    name = "mpl-data-containers"
 
     @_preprocess_data(
         replace_names=[
@@ -143,5 +143,5 @@ class Axes(MPLAxes):
         return pcw
 
 
-# This is a handy trick to allow e.g. plt.subplots(subplot_kw={'projection': 'data-prototype'})
+# This is a handy trick to allow e.g. plt.subplots(subplot_kw={'projection': 'mpl-data-containers'})
 mprojections.register_projection(Axes)

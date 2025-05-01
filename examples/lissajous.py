@@ -19,10 +19,10 @@ import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 from matplotlib.animation import FuncAnimation
 
-from data_prototype.conversion_edge import Graph
-from data_prototype.description import Desc
+from mpl_data_containers.conversion_edge import Graph
+from mpl_data_containers.description import Desc
 
-from data_prototype.wrappers import PathCollectionWrapper
+from mpl_data_containers.wrappers import PathCollectionWrapper
 
 
 class Lissajous:

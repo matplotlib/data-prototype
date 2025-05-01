@@ -1,6 +1,6 @@
 [run]
 source =
-    data_prototype
+    mpl_data_containers
 [report]
 omit =
     */python?.?/*

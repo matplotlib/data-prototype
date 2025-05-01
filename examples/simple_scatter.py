@@ -12,9 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 
-from data_prototype.containers import ArrayContainer
+from mpl_data_containers.containers import ArrayContainer
 
-from data_prototype.wrappers import PathCollectionWrapper
+from mpl_data_containers.wrappers import PathCollectionWrapper
 
 marker_obj = mmarkers.MarkerStyle("o")
 

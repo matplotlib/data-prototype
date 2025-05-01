@@ -7,7 +7,7 @@ from queue import PriorityQueue
 from typing import Any
 import numpy as np
 
-from data_prototype.description import Desc, desc_like, ShapeSpec
+from mpl_data_containers.description import Desc, desc_like, ShapeSpec
 
 from matplotlib.transforms import Transform
 

@@ -14,10 +14,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-from data_prototype.containers import ArrayContainer
-from data_prototype.artist import CompatibilityAxes
+from mpl_data_containers.containers import ArrayContainer
+from mpl_data_containers.artist import CompatibilityAxes
 
-from data_prototype.patches import Rectangle
+from mpl_data_containers.patches import Rectangle
 
 cont1 = ArrayContainer(
     lower_left_x=np.array(-3),

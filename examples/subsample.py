@@ -20,10 +20,10 @@ from matplotlib.colors import Normalize
 
 import numpy as np
 
-from data_prototype.description import Desc, desc_like
-from data_prototype.artist import CompatibilityArtist as CA
-from data_prototype.image import Image
-from data_prototype.containers import ArrayContainer
+from mpl_data_containers.description import Desc, desc_like
+from mpl_data_containers.artist import CompatibilityArtist as CA
+from mpl_data_containers.image import Image
+from mpl_data_containers.containers import ArrayContainer
 
 from skimage.transform import downscale_local_mean
 

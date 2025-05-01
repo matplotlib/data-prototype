@@ -14,11 +14,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
-from data_prototype.artist import CompatibilityArtist as CA
-from data_prototype.line import Line
-from data_prototype.containers import FuncContainer
-from data_prototype.description import Desc
-from data_prototype.conversion_edge import FuncEdge
+from mpl_data_containers.artist import CompatibilityArtist as CA
+from mpl_data_containers.line import Line
+from mpl_data_containers.containers import FuncContainer
+from mpl_data_containers.description import Desc
+from mpl_data_containers.conversion_edge import FuncEdge
 
 
 class SliderContainer(FuncContainer):

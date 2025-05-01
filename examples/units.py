@@ -12,12 +12,12 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib.markers as mmarkers
 
-from data_prototype.artist import CompatibilityAxes
-from data_prototype.containers import ArrayContainer
-from data_prototype.conversion_edge import FuncEdge
-from data_prototype.description import Desc
+from mpl_data_containers.artist import CompatibilityAxes
+from mpl_data_containers.containers import ArrayContainer
+from mpl_data_containers.conversion_edge import FuncEdge
+from mpl_data_containers.description import Desc
 
-from data_prototype.line import Line
+from mpl_data_containers.line import Line
 
 import pint
 

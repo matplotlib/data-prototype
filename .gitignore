@@ -103,4 +103,4 @@ doc/_static/constrained_layout*.png
 
 # setuptools_scm collateral
 
-data_prototype/_version.py
+mpl_data_containers/_version.py

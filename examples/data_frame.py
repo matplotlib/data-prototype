@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from data_prototype.artist import CompatibilityArtist as CA
-from data_prototype.line import Line
-from data_prototype.containers import DataFrameContainer
+from mpl_data_containers.artist import CompatibilityArtist as CA
+from mpl_data_containers.line import Line
+from mpl_data_containers.containers import DataFrameContainer
 
 th = np.linspace(0, 4 * np.pi, 256)
 
